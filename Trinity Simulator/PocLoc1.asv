@@ -1,0 +1,6 @@
+function [v, om] = PocLoc1(laser_rp)
+
+v = laser_rp(1);
+om1 = -30 + (laser_rp(2)+laser_rp(5)+laser_rp(8))/3;
+om2 = +30 - (laser_rp(34)+laser_rp(31)+laser_rp(28))/3;
+om = 0.01*(om1+om2)/2;
