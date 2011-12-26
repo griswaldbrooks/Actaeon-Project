@@ -44,6 +44,7 @@ field_walls = [outer_walls;island_walls;lr_walls;ll_walls;ur_walls];
 
 r_pose_start = [100,225,(pi/180)*(-90)];
 r_pose = r_pose_start;
+r_pose_est = r_pose;
 num_readings = 36;
 angle_increment = 10*(pi/180);
 map_dim = 60;
@@ -52,7 +53,7 @@ om = 0; % Angular Velocity
 dt = 0.25; % Time step
 path = [];
 map = zeros(map_dim,map_dim);
-map_f = map;
+map_f = ones(map_dim,map_dim);
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
@@ -116,7 +117,8 @@ for t = 0:dt:5000
         %plot(laser_xy(:,1),laser_xy(:,2), 'b.')
     end
     %%% Show special laser lines in different colors %%%
-    %%%line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
+%    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
+     line([r_pose(2)/8 + 15,laser_xy(36,2)/8 + 15],[r_pose(1)/8 + 15,laser_xy(36,1)/8 + 15], 'Color','g') % Heading beam
     for index = [31]
         %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
@@ -126,7 +128,8 @@ for t = 0:dt:5000
         %line(field_walls(iter:iter+1,1),field_walls(iter:iter+1,2))
     end
     %%% PLOT ROBOT %%%
-    plot(r_pose(1),r_pose(2),'ko')
+%    plot(r_pose(1)/8 + 15,r_pose(2)/8 + 15,'ro')
+    plot(r_pose(2)/8 + 15,r_pose(1)/8 + 15,'ro')
 
 
     
@@ -136,31 +139,45 @@ for t = 0:dt:5000
     [v, om] = PocLoc1(laser_rp);
     
     %%% MOTION NOISE %%%
-    v = v + .2*rand(1);
-    om = om + .01*rand(1);
+    %v = v + .2*rand(1);
+    %om = om + .01*rand(1);
     
     %%% MOTION DAMPENING %%%
     v = 0.1*v + 0.9*vp;
     om = 0.1*om + 0.9*omp;
     
     %%% MOTION MODEL %%%
-    r_pose(3) = r_pose(3) + om*dt;
-    r_pose(1) = r_pose(1) + v*cos(r_pose(3));
-    r_pose(2) = r_pose(2) + v*sin(r_pose(3));
+    r_pose(3) = r_pose(3) + (om + 0.01*rand(1) + 0.01)*dt;
+    r_pose(1) = r_pose(1) + (v + 0.2*rand(1) + 0.2)*cos(r_pose(3));
+    r_pose(2) = r_pose(2) + (v + 0.2*rand(1) + 0.2)*sin(r_pose(3));
+    
+    r_pose_est(3) = r_pose(3) + om*dt;
+    r_pose_est(1) = r_pose(1) + v*cos(r_pose(3));
+    r_pose_est(2) = r_pose(2) + v*sin(r_pose(3));
    
 
     %%% SLAM %%%
-    map = slam(laser_rp,r_pose,map);
+    map = slam(laser_rp,r_pose_est,map);
     axis([0,61,0,61])
-    surf(map)
+    %surf(map)
     %element_th = 0.3;
-    map_f = map_f + map;
     %map_f = (map_f/norm(map_f));
+    map_f = map_f + map;
+    
 
     surf(map_f)
     
-    pause(1/256)
+    %pause(1/256)
+    pause(1/2048)
 end
+
+input('Press Enter to Filter Map: ')
+
+map_fg = (map_f/norm(map_f));
+map_fg = (map_fg > 0.02);
+map_fg = double(map_fg);
+cla
+surf(map_fg)
 
 
 

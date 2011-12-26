@@ -1,4 +1,11 @@
-function map_p = slam(laser_rp,r_pose,map)
+%%% Mapping only, sets the points in the 3x3 matrix centered at a distance
+%%% measurement to the cumulative multiplicative mean.
+%%% This means that the current value of the elements around a measurements are multiplied by
+%%% the mean of the 3x3 surrounding elements. They are them summed with
+%%% their previous value. The measurement location is then incremented by
+%%% one.
+
+function map_p = slam1(laser_rp,r_pose,map)
 scaler = 8;
 map_dim = length(map);
 window_dim = 3;
@@ -16,6 +23,35 @@ for index = 1:length(laser_rp)
     y = y + 15;
     laser_xy(index,:) = [x,y];
 end
+
+% %%% Smooth map (motion uncertainty) %%%
+% for map_ndx_row = 1:length(map)
+%     for map_ndx_col = 1:length(map)
+%         offset = floor(window_dim/2);
+%         if (map_ndx_row - offset) < 1
+%             row_min = 1;
+%         else
+%             row_min = map_ndx_row - offset;
+%         end
+%         if (map_ndx_row + offset) >= length(map)
+%             row_max = length(map);
+%         else
+%             row_max = map_ndx_row + offset;
+%         end
+%         if (map_ndx_col - offset) < 1
+%             col_min = 1;
+%         else
+%             col_min = map_ndx_col - offset;
+%         end
+%         if (map_ndx_col + offset) >= length(map)
+%             col_max = length(map);
+%         else
+%             col_max = map_ndx_col + offset;
+%         end
+%         window = map(row_min:row_max,col_min:col_max);
+%         map_p(map_ndx_row, map_ndx_col) = mean(mean(window));
+%     end
+% end
 
 %%% Smooth map (motion uncertainty) %%%
 for occ_ndx = 1:length(laser_xy)
@@ -44,7 +80,7 @@ for occ_ndx = 1:length(laser_xy)
         map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
         for r_ndx = row_min:row_max
             for c_ndx = col_min:col_max
-                map_p(r_ndx, c_ndx) = map_p(r_ndx, c_ndx) + map_p(r_ndx, c_ndx)*mean(mean(window));
+                map_p(r_ndx, c_ndx) = map_p(r_ndx, c_ndx) + map_p(r_ndx, c_ndx)*\mean(mean(window));
             end
         end
 end

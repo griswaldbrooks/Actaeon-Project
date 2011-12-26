@@ -4,10 +4,19 @@ map_dim = length(map);
 window_dim = 3;
 angle_increment = 10*(pi/180);
 laser_xy = zeros(length(laser_rp),2);
-%map_p = zeros(length(map));
-map_p = map;
+map_p = zeros(length(map));
+%map_p = map;
 
-% 
+%%% Calculate occlusion coordinates %%%
+for index = 1:length(laser_rp)
+    angle = index*angle_increment + r_pose(3);
+    x = round( (laser_rp(index)*cos(angle) + r_pose(1))/scaler );
+    y = round( (laser_rp(index)*sin(angle) + r_pose(2))/scaler );
+    x = x + 15;
+    y = y + 15;
+    laser_xy(index,:) = [x,y];
+end
+
 % %%% Smooth map (motion uncertainty) %%%
 % for map_ndx_row = 1:length(map)
 %     for map_ndx_col = 1:length(map)
@@ -36,17 +45,39 @@ map_p = map;
 %         map_p(map_ndx_row, map_ndx_col) = mean(mean(window));
 %     end
 % end
-%
 
-%%% Calculate occlusion coordinates %%%
-for index = 1:length(laser_rp)
-    angle = index*angle_increment + r_pose(3);
-    x = ceil( (laser_rp(index)*cos(angle) + r_pose(1))/scaler );
-    y = ceil( (laser_rp(index)*sin(angle) + r_pose(2))/scaler );
-    x = x + 15;
-    y = y + 15;
-    laser_xy(index,:) = [x,y];
+%%% Smooth map (motion uncertainty) %%%
+for occ_ndx = 1:length(laser_xy)
+        offset = floor(window_dim/2);
+        if (laser_xy(occ_ndx,1) - offset) < 1
+            row_min = 1;
+        else
+            row_min = laser_xy(occ_ndx,1) - offset;
+        end
+        if (laser_xy(occ_ndx,1) + offset) >= length(map)
+            row_max = length(map);
+        else
+            row_max = laser_xy(occ_ndx,1) + offset;
+        end
+        if (laser_xy(occ_ndx,2) - offset) < 1
+            col_min = 1;
+        else
+            col_min = laser_xy(occ_ndx,2) - offset;
+        end
+        if (laser_xy(occ_ndx,2) + offset) >= length(map)
+            col_max = length(map);
+        else
+            col_max = laser_xy(occ_ndx,2) + offset;
+        end
+        window = map(row_min:row_max,col_min:col_max);
+        map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
+        for r_ndx = row_min:row_max
+            for c_ndx = col_min:col_max
+                map_p(r_ndx, c_ndx) = map_p(r_ndx, c_ndx) + map_p(r_ndx, c_ndx)*mean(mean(window));
+            end
+        end
 end
+
 
 %%% Increase occlusion probability %%%
 for index = 1:length(laser_rp)
@@ -59,6 +90,3 @@ end
 
 map_p = map_p/norm(map_p);
 
-x_r = ceil(r_pose(1)/scaler) + 15;
-y_r = ceil(r_pose(2)/scaler) + 15;
-%map_p(x_r,y_r) = -1;
