@@ -1,0 +1,14 @@
+function [v, om] = PocLoc2(laser_rp)
+
+v = -23 + laser_rp(36);
+v = 0.1*atan(v);
+om1 = -23 + laser_rp(9);
+om2 = 23 - laser_rp(27);
+om3 = -32.5 + laser_rp(5);
+om4 = 32.5 - laser_rp(31);
+%om = 0.02*(om1+om2)/2;
+%c = v/250;
+om = 0.009*(om1+om2+om3+om4)/4 + 0.01*(1/v);
+%om = 0.02*(om2);
+
+if om > 

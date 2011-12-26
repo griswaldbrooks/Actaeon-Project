@@ -1,6 +1,8 @@
 cla, clc, clear
-max_dim = 248; %cm
 hold all
+
+%%% Field Walls are set up here as a list of line segments %%%
+max_dim = 248; % Maximum field dimensions in centimeters
 axis([-20,max_dim+20,-20,max_dim+20])
 axis square
 
@@ -10,49 +12,35 @@ outer_wall2 = [0,0;max_dim,0];
 outer_wall3 = [0,max_dim;max_dim,max_dim];
 outer_wall4 = [max_dim,0;max_dim,max_dim];
 outer_walls = [outer_wall1;outer_wall2;outer_wall3;outer_wall4];
-% for iter = 1:2:length(outer_walls)
-%     line(outer_walls(iter:iter+1,1),outer_walls(iter:iter+1,2))
-% end
+
 island_wall1 = [202,137;202,202];
 island_wall2 = [118,137;118,202];
 island_wall3 = [118,202;202,202];
 island_wall4 = [164,137;202,137];
 island_walls = [island_wall1;island_wall2;island_wall3;island_wall4];
-% for iter = 1:2:length(island_walls)
-%     line(island_walls(iter:iter+1,1),island_walls(iter:iter+1,2))
-% end
+
 lr_wall1 = [118,91;max_dim,91];
 lr_wall2 = [118,45;118,0];
 lr_walls = [lr_wall1;lr_wall2];
-% for iter = 1:2:length(lr_walls)
-%     line(lr_walls(iter:iter+1,1),lr_walls(iter:iter+1,2))
-% end
+
 ll_wall1 = [0,103;72,103];
 ll_wall2 = [72,103;72,46];
 ll_walls = [ll_wall1;ll_wall2];
-% for iter = 1:2:length(ll_walls)
-%     line(ll_walls(iter:iter+1,1),ll_walls(iter:iter+1,2))
-% end
+
 ur_wall1 = [72,157;72,max_dim];
 ur_wall2 = [46,157;72,157];
 ur_walls = [ur_wall1;ur_wall2];
-% for iter = 1:2:length(ur_walls)
-%     line(ur_walls(iter:iter+1,1),ur_walls(iter:iter+1,2))
-% end
+
 field_walls = [outer_walls;island_walls;lr_walls;ll_walls;ur_walls];
 
-
-r_pose_start = [100,225,(pi/180)*(-90)];
+%%% Initialization parameters for robot and sensor %%%
+r_pose_start = [100,225,(pi/180)*(-90)]; % Starting pose of the robot
 r_pose = r_pose_start;
-num_readings = 36;
-angle_increment = 10*(pi/180);
-map_dim = 60;
-v = 0;  % Linear Velocity
-om = 0; % Angular Velocity
+num_readings = 36; % Number of sensor readings
+angle_increment = 10*(pi/180); % Angular displacement between readings in radians
+v = 0;  % Linear Velocity, cm/sec
+om = 0; % Angular Velocity, rad/sec
 dt = 0.25; % Time step
-path = [];
-map = zeros(map_dim,map_dim);
-map_f = map;
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
@@ -112,13 +100,13 @@ for t = 0:dt:5000
 
     %%% PLOT LASER LINES %%%
     for index = 1:num_readings
-        %line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
-        %plot(laser_xy(:,1),laser_xy(:,2), 'b.')
+        line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
+        plot(laser_xy(:,1),laser_xy(:,2), 'b.')
     end
     %%% Show special laser lines in different colors %%%
-    %%%line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
+    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
     for index = [31]
-        %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
+        line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
     
     %%% DRAW WALLS %%%

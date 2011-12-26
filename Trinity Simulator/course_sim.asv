@@ -46,14 +46,18 @@ r_pose_start = [100,225,(pi/180)*(-90)];
 r_pose = r_pose_start;
 num_readings = 36;
 angle_increment = 10*(pi/180);
+map_dim = 60;
 v = 0;  % Linear Velocity
 om = 0; % Angular Velocity
 dt = 0.25; % Time step
+path = [];
+map = zeros(map_dim,map_dim);
+map_f = map;
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
-for t = 0:dt:1000
-    cla
+for t = 0:dt:5000
+    %cla
     laser_r = ones(length(field_walls)/2,num_readings);
     laser_r = laser_r.*1e3;
 
@@ -109,16 +113,13 @@ for t = 0:dt:1000
     %%% PLOT LASER LINES %%%
     for index = 1:num_readings
         %line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
-        plot(laser_xy(:,1),laser_xy(:,2), 'b.')
+        %plot(laser_xy(:,1),laser_xy(:,2), 'b.')
     end
     %%% Show special laser lines in different colors %%%
-    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g')
-    line([r_pose(1),laser_xy(5,1)],[r_pose(2),laser_xy(5,2)], 'Color','r')
-    line([r_pose(1),laser_xy(31,1)],[r_pose(2),laser_xy(31,2)], 'Color','r')
-%     line([r_pose(1),laser_xy(2,1)],[r_pose(2),laser_xy(2,2)], 'Color','r')
-%     line([r_pose(1),laser_xy(8,1)],[r_pose(2),laser_xy(8,2)], 'Color','r')
-%     line([r_pose(1),laser_xy(34,1)],[r_pose(2),laser_xy(34,2)], 'Color','r')
-%     line([r_pose(1),laser_xy(28,1)],[r_pose(2),laser_xy(28,2)], 'Color','r')
+    %%%line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
+    for index = [31]
+        %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
+    end
     
     %%% DRAW WALLS %%%
     for iter = 1:2:length(field_walls)
@@ -127,7 +128,7 @@ for t = 0:dt:1000
     %%% PLOT ROBOT %%%
     plot(r_pose(1),r_pose(2),'ko')
 
-    pause(1/256)
+
     
     % *** Potential Field Navigation *** %
 	vp = v;
@@ -143,17 +144,33 @@ for t = 0:dt:1000
     om = 0.1*om + 0.9*omp;
     
     %%% MOTION MODEL %%%
-    r_pose_p = r_pose;
     r_pose(3) = r_pose(3) + om*dt;
     r_pose(1) = r_pose(1) + v*cos(r_pose(3));
     r_pose(2) = r_pose(2) + v*sin(r_pose(3));
-    
-    %%% TRACE PATH %%%
-    
-    for index = 1: 
-    line([r_pose_p(1),r_pose(1)],[r_pose_p(2),r_pose(2)], 'Color','k')
-    end
+   
 
+    %%% SLAM %%%
+    %map = slam(laser_rp,r_pose,map);
+    %axis([0,61,0,61])
+    %surf(map)
+    %element_th = 0.3;
+    %map_f = map_f + (map > element_th);
+%    map_f = map_f > element_th;
+    %surf(map_f)
+    
+    laser_xy = zeros(num_readings,2);
+    for index = 1:num_readings
+        angle = index*angle_increment + r_pose(3);
+        laser_xy(index,:) = [laser_rp(index)*cos(angle) + r_pose(1),laser_rp(index)*sin(angle) + r_pose(2)];
+    end
+    
+    %%% PLOT LASER LINES %%%
+    for index = 1:num_readings
+        %line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
+        plot(laser_xy(:,1),laser_xy(:,2), 'b.')
+    end
+    
+    pause(1/256)
 end
 
 

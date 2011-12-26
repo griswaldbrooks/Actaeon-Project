@@ -1,3 +1,4 @@
+%%% Simple right wall follow algorithm %%%
 function [v, om] = PocLoc1(laser_rp)
 
 v = -0.2 + 0.006*laser_rp(36);
