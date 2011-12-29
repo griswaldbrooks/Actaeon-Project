@@ -47,15 +47,15 @@ r_pose = r_pose_start;
 r_pose_est = r_pose;
 num_readings = 36;
 angle_increment = 10*(pi/180);
-map_dim = 100;
+map_dim = 120;
 v = 0;  % Linear Velocity
 om = 0; % Angular Velocity
 dt = 0.25; % Time step
 path = [];
-map = ones(map_dim,map_dim);
-map = map*(1/(map_dim^2));
-%map_f = ones(map_dim,map_dim);
-%map = zeros(map_dim,map_dim);
+%map = ones(map_dim,map_dim);
+%map = map*(1/(map_dim^2));
+%map_f = zeros(map_dim,map_dim);
+map = zeros(map_dim,map_dim);
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
@@ -120,7 +120,7 @@ for t = 0:dt:5000
     end
     %%% Show special laser lines in different colors %%%
 %    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
-     line([r_pose(2)/2 + 15,laser_xy(36,2)/2 + 15],[r_pose(1)/2 + 15,laser_xy(36,1)/2 + 15], 'Color','g') % Heading beam
+     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
     for index = [31]
         %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
@@ -131,7 +131,7 @@ for t = 0:dt:5000
     end
     %%% PLOT ROBOT %%%
 %    plot(r_pose(1)/8 + 15,r_pose(2)/8 + 15,'ro')
-    plot(r_pose(2)/2 + 15,r_pose(1)/2 + 15,'ro')
+    plot(r_pose(2)/4 + 15,r_pose(1)/4 + 15,'ro')
 
 
     
@@ -161,8 +161,9 @@ for t = 0:dt:5000
     %%% SLAM %%%
     map = slam(laser_rp,r_pose_est,map);
     axis([0, map_dim + 1,0,map_dim + 1])
+%    map = (map/norm(map));
     surf(map)
-    %element_th = 0.3;
+
     %map_f = (map_f/norm(map_f));
     %map_f = map_f + map;
     %map_f = map_f.*map;

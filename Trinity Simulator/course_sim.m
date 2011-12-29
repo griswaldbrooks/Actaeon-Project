@@ -53,8 +53,9 @@ om = 0; % Angular Velocity
 dt = 0.25; % Time step
 path = [];
 map = ones(map_dim,map_dim);
-map = map*(1/(map_dim^2));
-%map_f = ones(map_dim,map_dim);
+map = 0.5*map;
+%map = map*(1/(map_dim^2));
+%map_f = zeros(map_dim,map_dim);
 %map = zeros(map_dim,map_dim);
 pause(1)
 
@@ -159,10 +160,11 @@ for t = 0:dt:5000
    
 
     %%% SLAM %%%
-    map = slam(laser_rp,r_pose_est,map);
+    [map,r_pose] = slam(laser_rp,r_pose_est,map);
     axis([0, map_dim + 1,0,map_dim + 1])
+%    map = (map/norm(map));
     surf(map)
-    %element_th = 0.3;
+
     %map_f = (map_f/norm(map_f));
     %map_f = map_f + map;
     %map_f = map_f.*map;
