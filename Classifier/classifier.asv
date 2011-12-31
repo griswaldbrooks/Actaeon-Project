@@ -8,6 +8,13 @@ for index = 1:length(laser_rp)
     laser_rth(index,:) = [laser_rp(index),angle];
 end
 
-points = parse_scan(laser_rth);
+vv_pts = parse_scan(laser_rth,r_pose);
+
+for c_ndx = 1:2:size(points,2)
+    plot(points(:,c_ndx),points(:,c_ndx+1), 'r+')
+end
+input('pause')
+
+current_hypos = generate_hypotheses(vv_pts);
 
 map = zeros(length(laser_rp));

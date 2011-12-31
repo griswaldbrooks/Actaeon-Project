@@ -116,11 +116,12 @@ for t = 0:dt:5000
     %%% PLOT LASER LINES %%%
     for index = 1:num_readings
         %line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
-        %plot(laser_xy(:,1),laser_xy(:,2), 'b.')
+        plot(laser_xy(:,1),laser_xy(:,2), 'b.')
     end
     %%% Show special laser lines in different colors %%%
-%    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
-     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
+    line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
+%     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
+
     for index = [31]
         %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
@@ -131,7 +132,8 @@ for t = 0:dt:5000
     end
     %%% PLOT ROBOT %%%
 %    plot(r_pose(1)/8 + 15,r_pose(2)/8 + 15,'ro')
-    plot(r_pose(2)/4 + 15,r_pose(1)/4 + 15,'ro')
+%    plot(r_pose(2)/4 + 15,r_pose(1)/4 + 15,'ro')
+    plot(r_pose(1),r_pose(2),'ro')
 
 
     

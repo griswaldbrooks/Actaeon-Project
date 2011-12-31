@@ -8,6 +8,13 @@ for index = 1:length(laser_rp)
     laser_rth(index,:) = [laser_rp(index),angle];
 end
 
-points = parse_scan(laser_rth);
+vv_pts = parse_scan(laser_rth,r_pose);
+
+for c_ndx = 1:2:size(vv_pts,2)
+    plot(vv_pts(:,c_ndx),vv_pts(:,c_ndx+1), 'r+')
+end
+%input('pause: classifier 16')
+
+current_hypos = generate_hypotheses(vv_pts);
 
 map = zeros(length(laser_rp));
