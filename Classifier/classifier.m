@@ -1,4 +1,4 @@
-function map = classifier(laser_rp,r_pose)
+function r_pose = classifier(laser_rp,r_pose)
 
 %%% Generate list of ranges and relative angles
 laser_rth = zeros(length(laser_rp),2);
@@ -16,5 +16,8 @@ end
 %input('pause: classifier 16')
 
 current_hypos = generate_hypotheses(vv_pts);
+%current_hypos
+r_pose =local1(current_hypos,r_pose);
 
-map = zeros(length(laser_rp));
+%input('pause: classifier 22')
+%map = zeros(length(laser_rp));

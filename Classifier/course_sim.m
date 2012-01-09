@@ -54,7 +54,8 @@ dt = 0.25; % Time step
 path = [];
 %map = ones(map_dim,map_dim);
 %map = map*(1/(map_dim^2));
-%map_f = zeros(map_dim,map_dim);
+map_f = zeros(map_dim,map_dim);
+map_count = zeros(map_dim,map_dim);
 map = zeros(map_dim,map_dim);
 pause(1)
 
@@ -123,12 +124,12 @@ for t = 0:dt:5000
 %     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
 
     for index = [31]
-        %%%line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
+        line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
     
     %%% DRAW WALLS %%%
     for iter = 1:2:length(field_walls)
-        %line(field_walls(iter:iter+1,1),field_walls(iter:iter+1,2))
+        line(field_walls(iter:iter+1,1),field_walls(iter:iter+1,2))
     end
     %%% PLOT ROBOT %%%
 %    plot(r_pose(1)/8 + 15,r_pose(2)/8 + 15,'ro')
@@ -171,12 +172,33 @@ for t = 0:dt:5000
     %map_f = map_f.*map;
     %surf(map_f)
     
-    map = classifier(laser_rp,r_pose_est);
+    r_pose_est = classifier(laser_rp,r_pose_est);
+    map = slam_mean(laser_rp,r_pose_est,map);
+    %axis([0, map_dim + 1,0,map_dim + 1])
+    %map_ct = map;
+    %map_ct(map_ct > 0) = 1;
+    %map_count = map_count + map_ct; 
+    map_f = map_f + map;
+    %surf((map_f./map_count)')
+    %surf(map_f')
+    
+    %%% PLOT NEW LASER DOTS %%%
+    laser_xy = zeros(num_readings,2);
+    for index = 1:num_readings
+        angle = index*angle_increment + r_pose_est(3);
+        laser_xy(index,:) = [laser_rp(index)*cos(angle) + r_pose_est(1),laser_rp(index)*sin(angle) + r_pose_est(2)];
+    end
+
+    %%% PLOT LASER LINES %%%
+    for index = 1:num_readings
+        plot(laser_xy(:,1),laser_xy(:,2), 'go')
+    end
+    %%%
     
 %%% DRAW HYPOTHESE %%%
-    for iter = 1:2:length(map)
-        line(map(iter:iter+1,1),map(iter:iter+1,2))
-    end
+%     for iter = 1:2:length(map)
+%         line(map(iter:iter+1,1),map(iter:iter+1,2))
+%     end
     pause(1/2048)
 end
 

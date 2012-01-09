@@ -11,6 +11,7 @@ distances = zeros(1,k);
 temp_set = pts;
 %%% Place points into clusters, Ensure that each cluster has at least one
 %%% point
+%pts
 for k_ndx = 1:2:(2*k)
     clusters(1,k_ndx:(k_ndx+1)) = temp_set(1,:);
     temp_set(1,:) = [];
@@ -19,7 +20,7 @@ end
 %%% Randomly place the rest
 c_ndx = 2;
 while(~isempty(temp_set))
-    r_ndx = round(mod(rand(1),2)) + 1;
+    r_ndx = ceil(k*rand(1));
     r_ndx = 2*r_ndx - 1;
     clusters(c_ndx,r_ndx:(r_ndx+1)) = temp_set(1,:);
     temp_set(1,:) = [];
@@ -45,7 +46,7 @@ for c_ndx = 1:2:(2*k-1)
 end
 
 %new_means
-%input('pause: k_means 41')
+%input('pause: k_means 48')
 %%% Start Main Loop
 while(any(any(old_means ~= new_means)))
     
@@ -60,7 +61,7 @@ while(any(any(old_means ~= new_means)))
         for k_ndx = 1:k
             distances(k_ndx) = sqrt((new_means(k_ndx,1) - temp_set(1,1))^2 + (new_means(k_ndx,2) - temp_set(1,2))^2);
         end
-        temp_set(1,:)
+        temp_set(1,:);
         %distances
         %input('pause: k_means 64')
         %%% Arg min %%%
@@ -77,7 +78,7 @@ while(any(any(old_means ~= new_means)))
         c_ndx = c_ndx + 1;
     end
     %clusters
-    %input('pause: k_means 68')
+    %input('pause: k_means 80')
     %%% Calculate new means
     old_means = new_means;
     new_means = zeros(k,2);
@@ -88,8 +89,16 @@ while(any(any(old_means ~= new_means)))
         x_vect(all(x_vect==0,2),:) = [];
         y_vect(all(y_vect==0,2),:) = [];
         
-        pt_avg_x = mean(x_vect);
-        pt_avg_y = mean(y_vect);
+        if isempty(x_vect)
+            pt_avg_x = 0;
+        else
+            pt_avg_x = mean(x_vect);
+        end
+        if isempty(y_vect)
+            pt_avg_y = 0;
+        else
+            pt_avg_y = mean(y_vect);
+        end
  
         new_means((c_ndx+1)/2,:) = [pt_avg_x,pt_avg_y];
     end

@@ -5,7 +5,9 @@ function clusters = k_lines(k,pts)
 pt_cl = [pts,zeros(size(pts,1),1)]; % Copy points and give them a default association of k, since the value of zero will never be a cluster assignment
 %clusters = zeros(size(pt_cl,1),k);
 %%% Generate initial clusters
+%input('pause: k_lines 8')
 clusters = k_means(k,pts);
+%input('pause: k_lines 10')
 new_lines = zeros(k,2);
 old_lines = zeros(k,2);
 distances = zeros(1,k);
@@ -83,7 +85,7 @@ while(any(any(old_lines ~= new_lines)))
     %%% Calculate New Lines
     old_lines = new_lines;
     new_lines = zeros(k,2);
-    
+    %input('pause: k_lines 86')
     
     %--------------------------
     for c_ndx = 1:2:(2*k-1)
@@ -134,7 +136,7 @@ for pt_ndx = 2:(size(pt_cl,1)-1)
 end
     
 %%% Reassign the clusters
-clusters = zeros(size(pt_cl,1),k);
+clusters = zeros(size(pt_cl,1),2*k);
 for pt_ndx = 1:size(pt_cl,1)
     cl_ndx = 2*pt_cl(pt_ndx,3) - 1;
     clusters(pt_ndx,cl_ndx:(cl_ndx+1)) = pt_cl(pt_ndx,1:2);
