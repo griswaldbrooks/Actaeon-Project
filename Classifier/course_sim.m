@@ -57,6 +57,9 @@ path = [];
 map_f = zeros(map_dim,map_dim);
 map_count = zeros(map_dim,map_dim);
 map = zeros(map_dim,map_dim);
+xn = [0,0,0,0];
+yn = [0,0,0,0];
+orient_array = [];
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
@@ -172,15 +175,23 @@ for t = 0:dt:5000
     %map_f = map_f.*map;
     %surf(map_f)
     
-    r_pose_est = classifier(laser_rp,r_pose_est);
+% %     if t <= 10
+% %         xn = [r_pose_est(3),r_pose_est(3),r_pose_est(3),r_pose_est(3)];
+% %         yn = [r_pose_est(3),r_pose_est(3),r_pose_est(3),r_pose_est(3)];
+% %     end
+    
+    [r_pose_est,xn,yn] = classifier(laser_rp,r_pose_est,xn,yn);
     map = slam_mean(laser_rp,r_pose_est,map);
-    %axis([0, map_dim + 1,0,map_dim + 1])
+    axis([0, map_dim + 1,0,map_dim + 1])
     %map_ct = map;
     %map_ct(map_ct > 0) = 1;
     %map_count = map_count + map_ct; 
     map_f = map_f + map;
     %surf((map_f./map_count)')
-    %surf(map_f')
+    surf(map_f')
+    %plot(t,r_pose_est(3),'o')
+    %axis([t-100, t,-2*pi,2*pi])
+    %orient_array = [orient_array,r_pose(3)];
     
     %%% PLOT NEW LASER DOTS %%%
     laser_xy = zeros(num_readings,2);

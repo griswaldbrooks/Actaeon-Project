@@ -24,9 +24,6 @@ for index = 1:length(laser_rp)
     laser_xy(index,:) = [x,y];
 end
 
-if r_pose(1) > 200
-    laser_xy
-end
 
 % %%% Smooth map (motion uncertainty) %%%
 % for map_ndx_row = 1:length(map)
@@ -81,7 +78,7 @@ for occ_ndx = 1:length(laser_xy)
             col_max = laser_xy(occ_ndx,2) + offset;
         end
         window = map(row_min:row_max,col_min:col_max);
-        %laser_xy
+
         if laser_xy(occ_ndx,1) < 1
             laser_xy(occ_ndx,1) = 1;
         elseif laser_xy(occ_ndx,1) > length(map)
@@ -92,9 +89,8 @@ for occ_ndx = 1:length(laser_xy)
         elseif laser_xy(occ_ndx,2) > length(map)
             laser_xy(occ_ndx,2) = length(map);
         end
-        map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
-        if r_pose(1) > 200
-            map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2))
+        if ~isempty(window)
+            map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
         end
         for r_ndx = row_min:row_max
             for c_ndx = col_min:col_max
@@ -122,17 +118,6 @@ for index = 1:length(laser_rp)
     if ((x >= 1)&&(x <= map_dim)) && ((y >= 1)&&(y <= map_dim))
         map_p(x,y) = map_p(x,y) + 1;
     end
-end
-if sum(isnan(map_p))
-    map_p
-    input('Nan')
-end
-if sum(isinf(map_p))
-    map_p
-    input('Inf')
-end
-if r_pose(1) > 200
-    map_p
 end
 
 map_p = map_p/norm(map_p);

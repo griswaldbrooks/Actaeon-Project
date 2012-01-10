@@ -24,6 +24,7 @@ for index = 1:length(laser_rp)
     laser_xy(index,:) = [x,y];
 end
 
+
 % %%% Smooth map (motion uncertainty) %%%
 % for map_ndx_row = 1:length(map)
 %     for map_ndx_col = 1:length(map)
@@ -77,13 +78,20 @@ for occ_ndx = 1:length(laser_xy)
             col_max = laser_xy(occ_ndx,2) + offset;
         end
         window = map(row_min:row_max,col_min:col_max);
-        %laser_xy
+
         if laser_xy(occ_ndx,1) < 1
             laser_xy(occ_ndx,1) = 1;
         elseif laser_xy(occ_ndx,1) > length(map)
             laser_xy(occ_ndx,1) = length(map);
         end
-        map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
+        if laser_xy(occ_ndx,2) < 1
+            laser_xy(occ_ndx,2) = 1;
+        elseif laser_xy(occ_ndx,2) > length(map)
+            laser_xy(occ_ndx,2) = length(map);
+        end
+        if ~isempty(window)
+            map_p(laser_xy(occ_ndx,1), laser_xy(occ_ndx,2)) = mean(mean(window));
+        end
         for r_ndx = row_min:row_max
             for c_ndx = col_min:col_max
                 map_p(r_ndx, c_ndx) = map_p(r_ndx, c_ndx) + map_p(r_ndx, c_ndx)*mean(mean(window));
@@ -96,8 +104,19 @@ end
 for index = 1:length(laser_rp)
     x = laser_xy(index,1);
     y = laser_xy(index,2);
+    if x < 1
+        x = 1;
+    elseif x > length(map)
+        x = length(map);
+    end
+    if y < 1
+        y = 1;
+    elseif y > length(map)
+        y = length(map);
+    end
+    
     if ((x >= 1)&&(x <= map_dim)) && ((y >= 1)&&(y <= map_dim))
-        map_p(laser_xy(index,1), laser_xy(index,2)) = map_p(laser_xy(index,1), laser_xy(index,2)) + 1;
+        map_p(x,y) = map_p(x,y) + 1;
     end
 end
 
