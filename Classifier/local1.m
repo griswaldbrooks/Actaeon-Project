@@ -14,9 +14,9 @@ a2 = 1.7359;
 a1 = 0.7245;
 a0 = 0.1204;
 
-k = 1.0000e-004;
 
-angle_increment = 10*(pi/180);
+
+%angle_increment = 10*(pi/180);
 
 %%% Find orientation of the walls
 orient_cand = [];
@@ -43,7 +43,7 @@ if ~isempty(orient_hypos)
 end
 %%%
 kc = -1;
-r_pose
+%r_pose
 if ~isempty(correction)
     xnz = r_pose(3) + kc*(correction);
    %r_pose(3) = r_pose(3) + kc*(correction);
@@ -54,9 +54,9 @@ if ~isempty(correction)
     r_pose(3) = ((b4*xnz + b3*xn(1) + b2*xn(2) + b1*xn(3) + b0*xn(4)) - a3*yn(1) - a2*yn(2) - a1*yn(3) - a0*yn(4))/a4;
    
 end
-r_pose
-xn
-yn
+%r_pose
+%xn
+%yn
 
 xn(4) = xn(3);
 xn(3) = xn(2);

@@ -42,12 +42,12 @@ ur_walls = [ur_wall1;ur_wall2];
 field_walls = [outer_walls;island_walls;lr_walls;ll_walls;ur_walls];
 
 
-r_pose_start = [100,225,(pi/180)*(-90)];
+r_pose_start = [10,225,(pi/180)*(-90)];
 r_pose = r_pose_start;
 r_pose_est = r_pose;
 num_readings = 36;
 angle_increment = 10*(pi/180);
-map_dim = 120;
+map_dim = 60;
 v = 0;  % Linear Velocity
 om = 0; % Angular Velocity
 dt = 0.25; % Time step
@@ -63,7 +63,7 @@ orient_array = [];
 pause(1)
 
 % *** ITERATE THROUGH POSITIONS *** %
-for t = 0:dt:5000
+for t = 0:dt:600
     cla
     laser_r = ones(length(field_walls)/2,num_readings);
     laser_r = laser_r.*1e3;
@@ -181,14 +181,15 @@ for t = 0:dt:5000
 % %     end
     
     [r_pose_est,xn,yn] = classifier(laser_rp,r_pose_est,xn,yn);
-    map = slam_mean(laser_rp,r_pose_est,map);
+    %map = slam_mean(laser_rp,r_pose_est,map);
+    map = occ_map_lo(laser_rp,r_pose_est,map);
     axis([0, map_dim + 1,0,map_dim + 1])
     %map_ct = map;
     %map_ct(map_ct > 0) = 1;
     %map_count = map_count + map_ct; 
     map_f = map_f + map;
     %surf((map_f./map_count)')
-    surf(map_f')
+    surf(map')
     %plot(t,r_pose_est(3),'o')
     %axis([t-100, t,-2*pi,2*pi])
     %orient_array = [orient_array,r_pose(3)];
@@ -206,7 +207,7 @@ for t = 0:dt:5000
     end
     %%%
     
-%%% DRAW HYPOTHESE %%%
+%%% DRAW HYPOTHESES %%%
 %     for iter = 1:2:length(map)
 %         line(map(iter:iter+1,1),map(iter:iter+1,2))
 %     end
@@ -215,12 +216,20 @@ end
 
 input('Press Enter to Filter Map: ')
 
-map_fg = (map_f/norm(map_f));
-map_fg = (map_fg > 0.02);
-map_fg = double(map_fg);
-cla
-surf(map_fg)
+% map_fg = (map_f/norm(map_f));
+% map_fg = (map_fg > 0.02);
+% map_fg = double(map_fg);
+% cla
+% surf(map_fg)
+map_fg = map;
+for m_rndx = 1:length(map)
+    for m_cndx = 1:length(map)
+        map_fg(m_rndx,m_cndx) = 1 - (1/(1+exp(map(m_rndx,m_cndx))));
+    end
+end
 
+cla
+surf(map_fg')
 
 
 
