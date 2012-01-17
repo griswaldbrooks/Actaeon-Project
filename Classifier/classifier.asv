@@ -1,4 +1,4 @@
-function map = classifier(laser_rp,r_pose)
+function [r_pose,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmarks)
 
 %%% Generate list of ranges and relative angles
 laser_rth = zeros(length(laser_rp),2);
@@ -10,11 +10,15 @@ end
 
 vv_pts = parse_scan(laser_rth,r_pose);
 
-for c_ndx = 1:2:size(points,2)
-    plot(points(:,c_ndx),points(:,c_ndx+1), 'r+')
+for c_ndx = 1:2:size(vv_pts,2)
+    plot(vv_pts(:,c_ndx),vv_pts(:,c_ndx+1), 'r+')
 end
-input('pause')
+%input('pause: classifier 16')
 
 current_hypos = generate_hypotheses(vv_pts);
+%current_hypos
+landmarks = associate_hypotheses(landmarks, current_hypos);
+[r_pose,xn,yn] =local1(current_hypos,r_pose,xn,yn,laser_rp,map);
 
-map = zeros(length(laser_rp));
+%input('pause: classifier 22')
+%map = zeros(length(laser_rp));

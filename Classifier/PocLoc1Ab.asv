@@ -1,5 +1,5 @@
 %%% Simple right wall follow algorithm %%%
-function [v, om, k] = PocLoc1Ab(laser_rp, my_pose)
+function [v, om, k] = PocLoc1(laser_rp, my_pose, target_pose)
 
 weight1 = 0.3; %0.3;
 weight2 = 0.2; %0.2;

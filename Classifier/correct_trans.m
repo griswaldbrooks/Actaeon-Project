@@ -1,9 +1,6 @@
-function [r_pose,xn,yn] = local1(walls_h,r_pose,xn,yn,laser_rp,map)
+function [r_pose]=correct_trans(r_pose,laser_rp,map)
 
-
-[r_pose,xn,yn] = correct_orient(walls_h,r_pose,xn,yn)
-
-%%% Correct for Translation Error %%%
+scaler = 8;
 sig = 1;
 for t_iter = 1:20
 occ_hit = [];
@@ -73,13 +70,3 @@ sig = (1 - k)*sig;
 plot(r_pose(1),r_pose(2), 'ko')
 %pause(1/64)
 end
-
-
-
-
-
-
-
-
-
-

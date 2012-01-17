@@ -5,7 +5,7 @@
 %%% their previous value. The measurement location is then incremented by
 %%% one.
 
-function map_p = slam_mean(laser_rp,r_pose,map)
+function map_p = occ_map_lo(laser_rp,r_pose,map)
 scaler = 8;
 map_dim = length(map);
 window_dim = 1;

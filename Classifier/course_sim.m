@@ -42,7 +42,7 @@ ur_walls = [ur_wall1;ur_wall2];
 field_walls = [outer_walls;island_walls;lr_walls;ll_walls;ur_walls];
 
 
-r_pose_start = [10,225,(pi/180)*(-90)];
+r_pose_start = [100,225,(pi/180)*(-90)];
 r_pose = r_pose_start;
 r_pose_est = r_pose;
 num_readings = 36;
@@ -54,6 +54,7 @@ dt = 0.25; % Time step
 path = [];
 %map = ones(map_dim,map_dim);
 %map = map*(1/(map_dim^2));
+landmarks = [];
 map_f = zeros(map_dim,map_dim);
 map_count = zeros(map_dim,map_dim);
 map = zeros(map_dim,map_dim);
@@ -126,7 +127,7 @@ for t = 0:dt:600
     line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
 %     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
 
-    for index = [31]
+    for index = [26,28,30]
         line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
     
@@ -153,15 +154,15 @@ for t = 0:dt:600
     %%% MOTION DAMPENING %%%
     v = 0.1*v + 0.9*vp;
     om = 0.1*om + 0.9*omp;
-    
+
     %%% MOTION MODEL %%%
     r_pose(3) = r_pose(3) + (om + 0.01*rand(1) + 0.01)*dt;
     r_pose(1) = r_pose(1) + (v + 0.2*rand(1) + 0.2)*cos(r_pose(3));
     r_pose(2) = r_pose(2) + (v + 0.2*rand(1) + 0.2)*sin(r_pose(3));
     
-    r_pose_est(3) = r_pose(3) + om*dt;
-    r_pose_est(1) = r_pose(1) + v*cos(r_pose(3));
-    r_pose_est(2) = r_pose(2) + v*sin(r_pose(3));
+    r_pose_est(3) = r_pose_est(3) + om*dt;
+    r_pose_est(1) = r_pose_est(1) + v*cos(r_pose_est(3));
+    r_pose_est(2) = r_pose_est(2) + v*sin(r_pose_est(3));
    
 
 %     %%% SLAM %%%
@@ -180,14 +181,17 @@ for t = 0:dt:600
 % %         yn = [r_pose_est(3),r_pose_est(3),r_pose_est(3),r_pose_est(3)];
 % %     end
     
-    [r_pose_est,xn,yn] = classifier(laser_rp,r_pose_est,xn,yn);
+    [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose_est,xn,yn,map,landmarks);
+    r_pose
+    r_pose_est
+    %input('pause: course_sim 186')
     %map = slam_mean(laser_rp,r_pose_est,map);
     map = occ_map_lo(laser_rp,r_pose_est,map);
-    axis([0, map_dim + 1,0,map_dim + 1])
+    %axis([0, map_dim + 1,0,map_dim + 1])
     %map_ct = map;
     %map_ct(map_ct > 0) = 1;
     %map_count = map_count + map_ct; 
-    map_f = map_f + map;
+    %map_f = map_f + map;
     %surf((map_f./map_count)')
     surf(map')
     %plot(t,r_pose_est(3),'o')
