@@ -17,8 +17,18 @@ end
 
 current_hypos = generate_hypotheses(vv_pts);
 %current_hypos
+%%% DRAW H %%%
+for iter = 1:2:size(landmarks,1)
+    line([landmarks(iter,1),landmarks(iter,3)],[landmarks(iter,2),landmarks(iter,4)],'Color','g')
+end
+
 landmarks = associate_hypotheses(landmarks, current_hypos);
-[r_pose,xn,yn] =local1(current_hypos,r_pose,xn,yn,laser_rp,map);
+%%% DRAW LANDMARKS %%%
+for iter = 1:2:size(landmarks,1)
+    line([landmarks(iter,1),landmarks(iter,3)],[landmarks(iter,2),landmarks(iter,4)],'Color','g')
+end
+
+[r_pose,xn,yn] =local1(current_hypos,r_pose,xn,yn,laser_rp,landmarks);
 
 %input('pause: classifier 22')
 %map = zeros(length(laser_rp));

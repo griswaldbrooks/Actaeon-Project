@@ -1,7 +1,7 @@
 cla, clc, clear
 max_dim = 248; %cm
 hold all
-axis([-20,max_dim+20,-20,max_dim+20])
+axis([-50,max_dim+100,-50,max_dim+100])
 axis square
 
 % Wall structure [x1,y1;x2,y2] end points of line segment
@@ -127,7 +127,7 @@ for t = 0:dt:600
     line([r_pose(1),laser_xy(36,1)],[r_pose(2),laser_xy(36,2)], 'Color','g') % Heading beam
 %     line([r_pose(2)/4 + 15,laser_xy(36,2)/4 + 15],[r_pose(1)/4 + 15,laser_xy(36,1)/4 + 15], 'Color','g') % Heading beam
 
-    for index = [26,28,30]
+    for index = [31]
         line([r_pose(1),laser_xy(index,1)],[r_pose(2),laser_xy(index,2)], 'Color','r')
     end
     

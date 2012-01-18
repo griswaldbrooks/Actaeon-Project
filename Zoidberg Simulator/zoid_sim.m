@@ -20,7 +20,8 @@ cla
 %%% Plot Flame %%%
 plot(flame_pose(1), flame_pose(2), 'rd-')
 %%%
-r_pose = [0,0,pi/2 + 5*(pi/180)];
+r_pose = [0,0,pi/2 + t];
+%r_pose = [0,0,pi/2 + 45*(pi/180)];
 %r_pose = [0,0,pi/2];
 %%% Restrict the Orientation [0,2*pi) %%%
 if r_pose(3) >= (2*pi)

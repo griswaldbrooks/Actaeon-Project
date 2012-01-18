@@ -57,14 +57,14 @@ sum_var_orth_mult = sum(var_orth_mult);
 %input('pause: produce_feature 49')
 if (var_orth_single < sum_var_orth_mult) && (var_orth_single < VAR_THRESH)
     %%% Plot Single Line
-    line([Line_single(1),Line_single(3)],[Line_single(2),Line_single(4)], 'Color', 'r')
+%    line([Line_single(1),Line_single(3)],[Line_single(2),Line_single(4)], 'Color', 'r')
     ftrs = Line_single;
     %clusters
 elseif (sum_var_orth_mult < VAR_THRESH)
     %%% Plot Multiple Lines %%%
-    for l_ndx = 1:size(Line_mult,1)
-        line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
-    end
+%     for l_ndx = 1:size(Line_mult,1)
+%         line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
+%     end
     ftrs = Line_mult;
 else
     k = 3;
@@ -89,9 +89,9 @@ else
     
     if (sum_var_orth_mult3 < VAR_THRESH)
     
-        for l_ndx = 1:size(Line_mult,1)
-            line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
-        end
+%         for l_ndx = 1:size(Line_mult,1)
+%             line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
+%         end
         ftrs = Line_mult;   
     else
         
@@ -117,9 +117,9 @@ else
     
     
     
-        for l_ndx = 1:size(Line_mult,1)
-            line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
-        end
+%         for l_ndx = 1:size(Line_mult,1)
+%             line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
+%         end
     ftrs = Line_mult;
         
         

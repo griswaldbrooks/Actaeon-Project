@@ -28,12 +28,12 @@ for laser_ndx = 1:size(laser_rp,2)
     err_xy = [err_xy;dx,dy];
 end
 
-err_xy;
+err_xy
 
 x_err = 0;
 y_err = 0;
 if ~isempty(err_xy)
-    m = 4;
+    m = 3;
     c = 30 - t_iter;
     1;
     err_xy(:,1);
@@ -53,15 +53,12 @@ if ~isempty(err_xy)
 
 end
 
-x_err;
-y_err;
-%k = (sig^2)/(sig^2 + 500^2);
-%k = 0.0001*t_iter;
+x_err
+y_err
+k = (sig^2)/(sig^2 + 500^2);
 k = 0.01;
 r_pose(1) = r_pose(1) + k*x_err;
 r_pose(2) = r_pose(2) + k*y_err;
 sig = (1 - k)*sig;
 plot(r_pose(1),r_pose(2), 'ko')
 %pause(1/64)
-err_xy = [];
-end
