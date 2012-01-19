@@ -1,7 +1,7 @@
 function landmarks = merge_landmarks(prev_land)
 %%% When marking records for deletion, set count to zero
 landmarks = [];
-prev_land
+%prev_land
 if ~isempty(prev_land)
     for pl_ndx1 = 1:size(prev_land,1)
         error = 1e6;
@@ -9,8 +9,11 @@ if ~isempty(prev_land)
         large_land_ndx = 0;
         %%% Find the closest neighbor %%%
         if (prev_land(pl_ndx1,8)~=0) %%% If the record isn't marked for deletion
+            %draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'r')
+            %input('Pause: merge land 13')
             for pl_ndx2 = 1:size(prev_land,1)
                 if (prev_land(pl_ndx2,8)~=0) && (pl_ndx1 ~= pl_ndx2)%%% If the record isn't marked for deletion
+                    %draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'g')
                     error = sqrt((prev_land(pl_ndx1,5) - prev_land(pl_ndx2,5))^2 + (prev_land(pl_ndx1,6) - prev_land(pl_ndx2,6))^2);
                     %%% Find the longer landmark %%%
                     pl1_len = sqrt((prev_land(pl_ndx1,1) + prev_land(pl_ndx1,3))^2 + (prev_land(pl_ndx1,2) + prev_land(pl_ndx1,4))^2);
@@ -70,7 +73,10 @@ if ~isempty(prev_land)
 %                     prev_land(pl_ndx2,4) = end_pt2(2);
                     %%% Mark pl_ndx1 for deletion
                     prev_land(sm_land_ndx,8) = 0;
-                    prev_land
+                    %prev_land
+                    
+                %%% If you are sufficiently close to your neighbor, merge %          
+                elseif
                 end
             end
         end
@@ -78,8 +84,8 @@ if ~isempty(prev_land)
     
     %%% Delete obsolete records %%%
     for pl_ndx = size(prev_land,1):-1:1
-        pl_ndx
-        prev_land
+        %pl_ndx
+        %prev_land
         if prev_land(pl_ndx,8) == 0
             prev_land(pl_ndx,:) = [];
         end

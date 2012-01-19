@@ -184,7 +184,7 @@ for t = 0:dt:600
     [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose_est,xn,yn,map,landmarks);
     r_pose
     r_pose_est
-    input('pause: course_sim 186')
+    %input('pause: course_sim 186')
     %map = slam_mean(laser_rp,r_pose_est,map);
     map = occ_map_lo(laser_rp,r_pose_est,map);
     %axis([0, map_dim + 1,0,map_dim + 1])

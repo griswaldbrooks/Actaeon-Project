@@ -92,27 +92,28 @@ else
             dx = current_hypos(ch_ndx,1) - current_hypos(ch_ndx,3);
             angle = atan2(dy,dx);
             r_len = sqrt(dy^2 + dx^2)/2;
-            center = [mean([current_hypos(ch_ndx,1),current_hypos(ch_ndx,3)]),mean([current_hypos(ch_ndx,2),current_hypos(ch_ndx,4)])];
-            
-            an_0 = abs(angle);
-            an_90 = abs(angle - pi/2);
-            an_n90 = abs(angle + pi/2);
-            an_180 = abs(angle - pi);
-            if an_180 < an_0
-                an_0 = an_180;
+            if r_len > 0.001 %%% Ignore short hypotheses
+                center = [mean([current_hypos(ch_ndx,1),current_hypos(ch_ndx,3)]),mean([current_hypos(ch_ndx,2),current_hypos(ch_ndx,4)])];            
+                an_0 = abs(angle);
+                an_90 = abs(angle - pi/2);
+                an_n90 = abs(angle + pi/2);
+                an_180 = abs(angle - pi);
+                if an_180 < an_0
+                    an_0 = an_180;
+                end
+                if an_n90 < an_90
+                    an_90 = an_n90;
+                end
+                if an_0 < an_90 %%% 0 degree orientation
+                    end_pt1 = [center(1) - r_len, center(2)];
+                    end_pt2 = [center(1) + r_len, center(2)];
+                else %%% 90 degree orientation
+                    end_pt1 = [center(1), center(2) - r_len];
+                    end_pt2 = [center(1), center(2) + r_len];
+                end
+                new_land = [end_pt1,end_pt2,center,r_len,1];            
+                landmarks = [landmarks;new_land];
             end
-            if an_n90 < an_90
-                an_90 = an_n90;
-            end
-            if an_0 < an_90 %%% 0 degree orientation
-                end_pt1 = [center(1) - r_len, center(2)];
-                end_pt2 = [center(1) + r_len, center(2)];
-            else %%% 90 degree orientation
-                end_pt1 = [center(1), center(2) - r_len];
-                end_pt2 = [center(1), center(2) + r_len];
-            end
-            new_land = [end_pt1,end_pt2,center,r_len,1];            
-            landmarks = [landmarks;new_land];
         end
     end
     landmarks = [prev_land;landmarks];
