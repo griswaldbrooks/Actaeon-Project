@@ -57,7 +57,7 @@ x_err;
 y_err;
 %k = (sig^2)/(sig^2 + 500^2);
 %k = 0.0001*t_iter;
-k = 0.001;
+k = 0.1;
 r_pose(1) = r_pose(1) + k*x_err;
 r_pose(2) = r_pose(2) + k*y_err;
 sig = (1 - k)*sig;

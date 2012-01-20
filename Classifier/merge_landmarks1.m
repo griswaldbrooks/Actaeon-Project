@@ -1,4 +1,4 @@
-function landmarks = merge_landmarks(prev_land)
+function landmarks = merge_landmarks1(prev_land)
 %%% landmark structure = [endpoint x1, endpoint y1,
 %%%                       endpoint x2, endpoint y2,
 %%%                       center x, center y,
@@ -187,7 +187,11 @@ if ~isempty(prev_land)
                 %%% If the landmark's endpoints are sufficiently close to it's neighbor, merge %          
                 %%% Check for same orientation first %%%
                 elseif (large_land_ndx~=0) && same_orient(prev_land(large_land_ndx,:),prev_land(sm_land_ndx,:)) && (prev_land(large_land_ndx,8) > count_thresh)
-                    if prev_land(large_land_ndx,:)
+                    if prev_land(sm_land_ndx,8) > prev_land(large_land_ndx,8)
+                        temp = large_land_ndx;
+                        large_land_ndx = sm_land_ndx;
+                        sm_land_ndx = temp;                       
+                    end
                     d_thresh = 5; %cm
                     r1 = sqrt((prev_land(large_land_ndx,1) - prev_land(sm_land_ndx,1))^2 + ((prev_land(large_land_ndx,2) - prev_land(sm_land_ndx,2))^2));
                     r2 = sqrt((prev_land(large_land_ndx,1) - prev_land(sm_land_ndx,3))^2 + ((prev_land(large_land_ndx,2) - prev_land(sm_land_ndx,4))^2));

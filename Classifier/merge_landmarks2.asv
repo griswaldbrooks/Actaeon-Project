@@ -1,4 +1,4 @@
-function landmarks = merge_landmarks(prev_land)
+function landmarks = merge_landmarks2(prev_land)
 %%% landmark structure = [endpoint x1, endpoint y1,
 %%%                       endpoint x2, endpoint y2,
 %%%                       center x, center y,
@@ -12,14 +12,28 @@ if ~isempty(prev_land)
         error = 1e6;
         sm_land_ndx = 0;
         large_land_ndx = 0;
+        same_or = 0;
         %%% Find the closest neighbor %%%
         if (prev_land(pl_ndx1,8)~=0) %%% If the record isn't marked for deletion
-            %draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'r')
+            draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'r')
             %input('Pause: merge land 13')
             for pl_ndx2 = 1:size(prev_land,1)
                 if (prev_land(pl_ndx2,8)~=0) && (pl_ndx1 ~= pl_ndx2)%%% If the record isn't marked for deletion
-                    %draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'g')
-                    error = sqrt((prev_land(pl_ndx1,5) - prev_land(pl_ndx2,5))^2 + (prev_land(pl_ndx1,6) - prev_land(pl_ndx2,6))^2);
+                    draw_circle(prev_land(pl_ndx1,5),prev_land(pl_ndx1,6),prev_land(pl_ndx1,7),'g')                    
+                    same_or = same_orient(prev_land(pl_ndx1,:),prev_land(pl_ndx2,:));
+                    %%% Orientation must be 0,pi,-pi,pi/2, or -pi/2
+                    if same_or
+                        dy = prev_land(pl_ndx2,2) - prev_land(pl_ndx2,4);
+                        dx = prev_land(pl_ndx2,1) - prev_land(pl_ndx2,3);
+                        angle = abs(atan2(dy,dx));
+                        if (angle == 0) || (angle == pi) %%% Find x distance
+                            error = prev_land(pl_ndx1,5) - prev_land(pl_ndx2,5);
+                        else %%% Find y distance
+                            error = prev_land(pl_ndx1,6) - prev_land(pl_ndx2,6);
+                        end
+                    else
+                        error = sqrt((prev_land(pl_ndx1,5) - prev_land(pl_ndx2,5))^2 + (prev_land(pl_ndx1,6) - prev_land(pl_ndx2,6))^2);
+                    end
                     %%% Find the longer landmark %%%
                     pl1_len = sqrt((prev_land(pl_ndx1,1) + prev_land(pl_ndx1,3))^2 + (prev_land(pl_ndx1,2) + prev_land(pl_ndx1,4))^2);
                     pl2_len = sqrt((prev_land(pl_ndx2,1) + prev_land(pl_ndx2,3))^2 + (prev_land(pl_ndx2,2) + prev_land(pl_ndx2,4))^2);
@@ -123,71 +137,16 @@ if ~isempty(prev_land)
                         prev_land(large_land_ndx,:) = [endpoint1,endpoint2,center,variance,count_t];
                         %%% Mark sm_land_ndx for deletion
                         prev_land(sm_land_ndx,8) = 0;
-                        
-%                     dy = prev_land(large_land_ndx,2) - prev_land(large_land_ndx,4);
-%                     dx = prev_land(large_land_ndx,1) - prev_land(large_land_ndx,3);
-%                     angle = atan2(dy,dx);
-%                     r_len = sqrt(dy^2 + dx^2)/2;
-%                     an_0 = abs(angle);
-%                     an_90 = abs(angle - pi/2);
-%                     an_n90 = abs(angle + pi/2);
-%                     an_180 = abs(angle - pi);
-%                     if an_180 < an_0
-%                         an_0 = an_180;
-%                     end
-%                     if an_n90 < an_90
-%                         an_90 = an_n90;
-%                     end
-%                     if an_0 < an_90 %%% 0 degree orientation
-%                         end_pt1 = [prev_land(large_land_ndx,5) - r_len, prev_land(large_land_ndx,6)];
-%                         end_pt2 = [prev_land(large_land_ndx,5) + r_len, prev_land(large_land_ndx,6)];
-%                     else %%% 90 degree orientation
-%                         end_pt1 = [prev_land(large_land_ndx,5), prev_land(large_land_ndx,6) - r_len];
-%                         end_pt2 = [prev_land(large_land_ndx,5), prev_land(large_land_ndx,6) + r_len];
-%                     end
-%                     prev_land(large_land_ndx,1) = end_pt1(1);
-%                     prev_land(large_land_ndx,2) = end_pt1(2);
-%                     prev_land(large_land_ndx,3) = end_pt2(1);
-%                     prev_land(large_land_ndx,4) = end_pt2(2);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                     prev_land(pl_ndx2,1) = (prev_land(pl_ndx1,8)/count)*prev_land(pl_ndx1,1) + (prev_land(pl_ndx2,8)/count)*prev_land(pl_ndx2,1);
-%                     prev_land(pl_ndx2,2) = (prev_land(pl_ndx1,8)/count)*prev_land(pl_ndx1,2) + (prev_land(pl_ndx2,8)/count)*prev_land(pl_ndx2,2);
-%                     prev_land(pl_ndx2,3) = (prev_land(pl_ndx1,8)/count)*prev_land(pl_ndx1,3) + (prev_land(pl_ndx2,8)/count)*prev_land(pl_ndx2,3);
-%                     prev_land(pl_ndx2,4) = (prev_land(pl_ndx1,8)/count)*prev_land(pl_ndx1,4) + (prev_land(pl_ndx2,8)/count)*prev_land(pl_ndx2,4);
-%                     dy = prev_land(pl_ndx2,2) - prev_land(pl_ndx2,4);
-%                     dx = prev_land(pl_ndx2,1) - prev_land(pl_ndx2,3);
-%                     angle = atan2(dy,dx);
-%                     r_len = sqrt(dy^2 + dx^2)/2;
-%             
-%                     an_0 = abs(angle);
-%                     an_90 = abs(angle - pi/2);
-%                     an_n90 = abs(angle + pi/2);
-%                     an_180 = abs(angle - pi);
-%                     if an_180 < an_0
-%                         an_0 = an_180;
-%                     end
-%                     if an_n90 < an_90
-%                         an_90 = an_n90;
-%                     end
-%                     if an_0 < an_90 %%% 0 degree orientation
-%                         end_pt1 = [prev_land(pl_ndx2,5) - r_len, prev_land(pl_ndx2,6)];
-%                         end_pt2 = [prev_land(pl_ndx2,5) + r_len, prev_land(pl_ndx2,6)];
-%                     else %%% 90 degree orientation
-%                         end_pt1 = [prev_land(pl_ndx2,5), prev_land(pl_ndx2,6) - r_len];
-%                         end_pt2 = [prev_land(pl_ndx2,5), prev_land(pl_ndx2,6) + r_len];
-%                     end
-%                     prev_land(pl_ndx2,1) = end_pt1(1);
-%                     prev_land(pl_ndx2,2) = end_pt1(2);
-%                     prev_land(pl_ndx2,3) = end_pt2(1);
-%                     prev_land(pl_ndx2,4) = end_pt2(2);
-                    %%% Mark sm_land_ndx for deletion
-                    %prev_land(sm_land_ndx,8) = 0;
-                    %prev_land
+                      
                     
                 %%% If the landmark's endpoints are sufficiently close to it's neighbor, merge %          
                 %%% Check for same orientation first %%%
-                elseif (large_land_ndx~=0) && same_orient(prev_land(large_land_ndx,:),prev_land(sm_land_ndx,:)) && (prev_land(large_land_ndx,8) > count_thresh)
-                    if prev_land(large_land_ndx,:)
+                elseif (large_land_ndx~=0) && same_or && (prev_land(large_land_ndx,8) > count_thresh)
+                    if prev_land(sm_land_ndx,8) > prev_land(large_land_ndx,8)
+                        temp = large_land_ndx;
+                        large_land_ndx = sm_land_ndx;
+                        sm_land_ndx = temp;                       
+                    end
                     d_thresh = 5; %cm
                     r1 = sqrt((prev_land(large_land_ndx,1) - prev_land(sm_land_ndx,1))^2 + ((prev_land(large_land_ndx,2) - prev_land(sm_land_ndx,2))^2));
                     r2 = sqrt((prev_land(large_land_ndx,1) - prev_land(sm_land_ndx,3))^2 + ((prev_land(large_land_ndx,2) - prev_land(sm_land_ndx,4))^2));
@@ -273,6 +232,7 @@ if ~isempty(prev_land)
                         prev_land(large_land_ndx,:) = [endpoint1,endpoint2,center,variance,count];
                         %%% Mark sm_land_ndx for deletion
                         prev_land(sm_land_ndx,8) = 0;
+                    elseif  overlap(prev_land(large_land_ndx,:),prev_land(sm_land_ndx,:)) && close_x_or_y(prev_land(large_land_ndx,:),prev_land(sm_land_ndx,:))%%% End points overlap and sufficiently close
                     end
                 end
             end

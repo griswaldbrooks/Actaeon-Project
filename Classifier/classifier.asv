@@ -1,6 +1,17 @@
 function [r_pose,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmarks)
 
-landmarks = merge_landmarks(prev_land)
+% t_land = [];
+% for l_ndx = 1:4:size(landmarks,1)
+%     t_land =  [t_land;landmarks(l_ndx),landmarks(l_ndx+2),landmarks(l_ndx+3),landmarks(l_ndx+4)];
+% end
+% landmarks = t_land;
+
+%%% Merge Previous Landmarks %%%
+landmarks = merge_landmarks(landmarks);
+
+%%% Correct for Translation Error %%%
+%[r_pose]=correct_trans(r_pose,laser_rp,landmarks);
+
 %%% Generate list of ranges and relative angles
 laser_rth = zeros(length(laser_rp),2);
 angle_increment = (2*pi)/length(laser_rp);
@@ -8,9 +19,6 @@ for index = 1:length(laser_rp)
     angle = index*angle_increment + r_pose(3);
     laser_rth(index,:) = [laser_rp(index),angle];
 end
-
-%%% Correct for Translation Error %%%
-[r_pose]=correct_trans(r_pose,laser_rp,landmarks);
 
 %%% Produce Candiate Point Clusters %%%
 vv_pts = parse_scan(laser_rth,r_pose);
@@ -21,10 +29,10 @@ end
 
 %%% Generate Line Landmark Hypotheses %%%
 current_hypos = generate_hypotheses(vv_pts);
-current_hypos
+%current_hypos
 
 %%% Correct for Orientation Error %%%
-[r_pose,xn,yn] = correct_orient(current_hypos,r_pose,xn,yn);
+%[r_pose,xn,yn] = correct_orient(current_hypos,r_pose,xn,yn);
 
 %[r_pose,xn,yn] =local1(current_hypos,r_pose,xn,yn,laser_rp,landmarks);
 

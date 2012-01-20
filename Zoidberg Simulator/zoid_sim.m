@@ -15,14 +15,18 @@ flame_max = 150;
 zoid_array = [flame_max,flame_max,flame_max,flame_max,flame_max];
 dt = 0.1;
 for t = 0:dt:30
-cla
-flame_pose = [-15+t,15];
+%cla
+flame_pose = [-15 + t,15];
 %%% Plot Flame %%%
-plot(flame_pose(1), flame_pose(2), 'rd-')
+if t == 15
+    plot(flame_pose(1), flame_pose(2), 'ys-')
+else
+    plot(flame_pose(1), flame_pose(2), 'rd-')
+end
 %%%
 %r_pose = [0,0,pi/2 + t];
 %r_pose = [0,0,pi/2 + 45*(pi/180)];
-r_pose = [0,0,pi/2];
+r_pose = [0,0,100*(pi/180)];
 %%% Restrict the Orientation [0,2*pi) %%%
 if r_pose(3) >= (2*pi)
     r_pose(3) = r_pose(3) - floor(r_pose(3)/(2*pi))*2*pi;
@@ -31,11 +35,11 @@ end
 plot(r_pose(1),r_pose(2), 'ks')
 %%%
 zoid_pose = [r_pose(1) + zoid_off_t*cos(r_pose(3)),r_pose(2) + zoid_off_t*sin(r_pose(3)), r_pose(3)];
-zoid_s1 = [zoid_pose(1) + zoid_off_s15*cos(zoid_pose(3) + pi/2),zoid_pose(2) + zoid_off_s15*sin(zoid_pose(3) + pi/2),zoid_pose(3)];
+zoid_s1 = [zoid_pose(1) + zoid_off_s15*cos(zoid_pose(3) + pi/2),zoid_pose(2) + zoid_off_s15*sin(zoid_pose(3) + pi/2),zoid_pose(3) + 7*(pi/180)];
 zoid_s2 = [zoid_pose(1) + zoid_off_s24*cos(zoid_pose(3) + pi/2),zoid_pose(2) + zoid_off_s24*sin(zoid_pose(3) + pi/2),zoid_pose(3)];
 zoid_s3 = [zoid_pose(1),zoid_pose(2),zoid_pose(3)];
 zoid_s4 = [zoid_pose(1) + zoid_off_s24*cos(zoid_pose(3) - pi/2),zoid_pose(2) + zoid_off_s24*sin(zoid_pose(3) - pi/2),zoid_pose(3)];
-zoid_s5 = [zoid_pose(1) + zoid_off_s15*cos(zoid_pose(3) - pi/2),zoid_pose(2) + zoid_off_s15*sin(zoid_pose(3) - pi/2),zoid_pose(3)];
+zoid_s5 = [zoid_pose(1) + zoid_off_s15*cos(zoid_pose(3) - pi/2),zoid_pose(2) + zoid_off_s15*sin(zoid_pose(3) - pi/2),zoid_pose(3) + 3*(pi/180)];
 
 
 %%% Plot Zoidberg %%%
@@ -66,51 +70,51 @@ line([blinder4(1),blinder4(3)],[blinder4(2),blinder4(4)], 'Color','k')
 %%%
 
 %%% Plot Sight Lines %%%
-if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s1(2),flame_pose(1) - zoid_s1(1))) < view_angle
-    slope_f = (flame_pose(2)- zoid_s1(2))/(flame_pose(1) - zoid_s1(1));
-    slope_b = (blinder1(2) - blinder1(4))/(blinder1(1) - blinder1(3));
-    slopes_eq = (slope_f == slope_b);
-    if ~slopes_eq
-        x = (blinder1(2) - zoid_s1(2) + slope_f*zoid_s1(1) - slope_b*blinder1(1))/(slope_f - slope_b);
-        y = slope_f*(x - zoid_s1(1)) + zoid_s1(2);
-        if abs(slope_b) < 1e6
-            x_true = ((x < blinder1(3)) && (x > blinder1(1)))||((x > blinder1(3)) && (x < blinder1(1)));
-            intersect = (x_true);
-        else
-            y_true = ((y < blinder1(4)) && (y > blinder1(2)))||((y > blinder1(4)) && (y < blinder1(2)));
-            intersect = (y_true);
-        end
-    end
-    if slopes_eq || ~intersect
-        line([zoid_s1(1),flame_pose(1)],[zoid_s1(2),flame_pose(2)],'Color','r')
-        zoid_array(1) = sqrt((flame_pose(2)- zoid_s1(2))^2 + (flame_pose(1) - zoid_s1(1))^2);
-    end
-end
-if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s2(2),flame_pose(1) - zoid_s2(1))) < view_angle
-    slope_f = (flame_pose(2)- zoid_s2(2))/(flame_pose(1) - zoid_s2(1));
-    slope_b1 = (blinder1(2) - blinder1(4))/(blinder1(1) - blinder1(3));
-    slope_b2 = (blinder2(2) - blinder2(4))/(blinder2(1) - blinder2(3));
-    slopes_eq = (slope_f == slope_b1) || (slope_f == slope_b2);
-    if ~slopes_eq
-        if abs(slope_b1) < 1e6
-            x1 = (blinder1(2) - zoid_s2(2) + slope_f*zoid_s2(1) - slope_b1*blinder1(1))/(slope_f - slope_b1);
-            x2 = (blinder2(2) - zoid_s2(2) + slope_f*zoid_s2(1) - slope_b2*blinder2(1))/(slope_f - slope_b2);
-            x1_true = ((x1 < blinder1(3)) && (x1 > blinder1(1)))||((x1 > blinder1(3)) && (x1 < blinder1(1)));
-            x2_true = ((x2 < blinder2(3)) && (x2 > blinder2(1)))||((x2 > blinder2(3)) && (x2 < blinder2(1)));
-            intersect = (x1_true || x2_true);
-        else
-            y1 = ((zoid_s2(2)/slope_f) - (blinder1(2)/slope_b1) + blinder1(1) - zoid_s2(1))/((1/slope_f) - (1/slope_b1));
-            y2 = ((zoid_s2(2)/slope_f) - (blinder2(2)/slope_b2) + blinder2(1) - zoid_s2(1))/((1/slope_f) - (1/slope_b2));
-            y1_true = ((y1 < blinder1(4)) && (y1 > blinder1(2)))||((y1 > blinder1(4)) && (y1 < blinder1(2)));
-            y2_true = ((y2 < blinder2(4)) && (y2 > blinder2(2)))||((y2 > blinder2(4)) && (y2 < blinder2(2)));
-            intersect = y1_true || y2_true;
-        end
-    end
-    if slopes_eq || ~intersect
-        line([zoid_s2(1),flame_pose(1)],[zoid_s2(2),flame_pose(2)],'Color','r')
-        zoid_array(2) = sqrt((flame_pose(2)- zoid_s2(2))^2 + (flame_pose(1) - zoid_s2(1))^2);
-    end
-end
+% if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s1(2),flame_pose(1) - zoid_s1(1))) < view_angle
+%     slope_f = (flame_pose(2)- zoid_s1(2))/(flame_pose(1) - zoid_s1(1));
+%     slope_b = (blinder1(2) - blinder1(4))/(blinder1(1) - blinder1(3));
+%     slopes_eq = (slope_f == slope_b);
+%     if ~slopes_eq
+%         x = (blinder1(2) - zoid_s1(2) + slope_f*zoid_s1(1) - slope_b*blinder1(1))/(slope_f - slope_b);
+%         y = slope_f*(x - zoid_s1(1)) + zoid_s1(2);
+%         if abs(slope_b) < 1e6
+%             x_true = ((x < blinder1(3)) && (x > blinder1(1)))||((x > blinder1(3)) && (x < blinder1(1)));
+%             intersect = (x_true);
+%         else
+%             y_true = ((y < blinder1(4)) && (y > blinder1(2)))||((y > blinder1(4)) && (y < blinder1(2)));
+%             intersect = (y_true);
+%         end
+%     end
+%     if slopes_eq || ~intersect
+%         line([zoid_s1(1),flame_pose(1)],[zoid_s1(2),flame_pose(2)],'Color','r')
+%         zoid_array(1) = sqrt((flame_pose(2)- zoid_s1(2))^2 + (flame_pose(1) - zoid_s1(1))^2);
+%     end
+% end
+% if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s2(2),flame_pose(1) - zoid_s2(1))) < view_angle
+%     slope_f = (flame_pose(2)- zoid_s2(2))/(flame_pose(1) - zoid_s2(1));
+%     slope_b1 = (blinder1(2) - blinder1(4))/(blinder1(1) - blinder1(3));
+%     slope_b2 = (blinder2(2) - blinder2(4))/(blinder2(1) - blinder2(3));
+%     slopes_eq = (slope_f == slope_b1) || (slope_f == slope_b2);
+%     if ~slopes_eq
+%         if abs(slope_b1) < 1e6
+%             x1 = (blinder1(2) - zoid_s2(2) + slope_f*zoid_s2(1) - slope_b1*blinder1(1))/(slope_f - slope_b1);
+%             x2 = (blinder2(2) - zoid_s2(2) + slope_f*zoid_s2(1) - slope_b2*blinder2(1))/(slope_f - slope_b2);
+%             x1_true = ((x1 < blinder1(3)) && (x1 > blinder1(1)))||((x1 > blinder1(3)) && (x1 < blinder1(1)));
+%             x2_true = ((x2 < blinder2(3)) && (x2 > blinder2(1)))||((x2 > blinder2(3)) && (x2 < blinder2(1)));
+%             intersect = (x1_true || x2_true);
+%         else
+%             y1 = ((zoid_s2(2)/slope_f) - (blinder1(2)/slope_b1) + blinder1(1) - zoid_s2(1))/((1/slope_f) - (1/slope_b1));
+%             y2 = ((zoid_s2(2)/slope_f) - (blinder2(2)/slope_b2) + blinder2(1) - zoid_s2(1))/((1/slope_f) - (1/slope_b2));
+%             y1_true = ((y1 < blinder1(4)) && (y1 > blinder1(2)))||((y1 > blinder1(4)) && (y1 < blinder1(2)));
+%             y2_true = ((y2 < blinder2(4)) && (y2 > blinder2(2)))||((y2 > blinder2(4)) && (y2 < blinder2(2)));
+%             intersect = y1_true || y2_true;
+%         end
+%     end
+%     if slopes_eq || ~intersect
+%         line([zoid_s2(1),flame_pose(1)],[zoid_s2(2),flame_pose(2)],'Color','r')
+%         zoid_array(2) = sqrt((flame_pose(2)- zoid_s2(2))^2 + (flame_pose(1) - zoid_s2(1))^2);
+%     end
+% end
 if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s3(2),flame_pose(1) - zoid_s3(1))) < view_angle
     slope_f = (flame_pose(2)- zoid_s3(2))/(flame_pose(1) - zoid_s3(1));
     slope_b2 = (blinder2(2) - blinder2(4))/(blinder2(1) - blinder2(3));
@@ -157,7 +161,7 @@ if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s4(2),flame_pose(1) - zoid_s4(1)
         end
     end
     if slopes_eq || ~intersect
-        line([zoid_s4(1),flame_pose(1)],[zoid_s4(2),flame_pose(2)],'Color','r')
+        line([zoid_s4(1),flame_pose(1)],[zoid_s4(2),flame_pose(2)],'Color','g')
         zoid_array(4) = sqrt((flame_pose(2)- zoid_s4(2))^2 + (flame_pose(1) - zoid_s4(1))^2);
     end
 end
@@ -177,7 +181,7 @@ if abs(zoid_pose(3) - atan2(flame_pose(2)- zoid_s5(2),flame_pose(1) - zoid_s5(1)
         end
     end
     if slopes_eq || ~intersect
-        line([zoid_s5(1),flame_pose(1)],[zoid_s5(2),flame_pose(2)],'Color','r')
+        line([zoid_s5(1),flame_pose(1)],[zoid_s5(2),flame_pose(2)],'Color','b')
         zoid_array(5) = sqrt((flame_pose(2)- zoid_s5(2))^2 + (flame_pose(1) - zoid_s5(1))^2);
     end
 end

@@ -181,7 +181,8 @@ for t = 0:dt:600
 % %         yn = [r_pose_est(3),r_pose_est(3),r_pose_est(3),r_pose_est(3)];
 % %     end
     
-    [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose_est,xn,yn,map,landmarks);
+%    [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose_est,xn,yn,map,field_walls);
+    [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmarks);
     r_pose
     r_pose_est
     %input('pause: course_sim 186')

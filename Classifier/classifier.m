@@ -1,10 +1,16 @@
 function [r_pose,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmarks)
 
+% t_land = [];
+% for l_ndx = 1:4:size(landmarks,1)
+%     t_land =  [t_land;landmarks(l_ndx),landmarks(l_ndx+2),landmarks(l_ndx+3),landmarks(l_ndx+4)];
+% end
+% landmarks = t_land;
+
 %%% Merge Previous Landmarks %%%
-landmarks = merge_landmarks(landmarks);
+landmarks = merge_landmarks2(landmarks);
 
 %%% Correct for Translation Error %%%
-[r_pose]=correct_trans(r_pose,laser_rp,landmarks);
+%[r_pose]=correct_trans(r_pose,laser_rp,landmarks);
 
 %%% Generate list of ranges and relative angles
 laser_rth = zeros(length(laser_rp),2);
@@ -26,7 +32,7 @@ current_hypos = generate_hypotheses(vv_pts);
 %current_hypos
 
 %%% Correct for Orientation Error %%%
-[r_pose,xn,yn] = correct_orient(current_hypos,r_pose,xn,yn);
+%[r_pose,xn,yn] = correct_orient(current_hypos,r_pose,xn,yn);
 
 %[r_pose,xn,yn] =local1(current_hypos,r_pose,xn,yn,laser_rp,landmarks);
 
