@@ -28,6 +28,16 @@ if size(pts,1) > k
     clusters = k_lines(k,pts);
 end
 
+%%% If there are only two points in a cluster, discard them %%%
+for c_ndx = size(clusters,2):-1:1
+    num_pts = sum(clusters(:,c_ndx) ~= 0);
+    if num_pts < 3
+        clusters
+        clusters(:,c_ndx) = [];
+    end
+end
+clusters
+%%%
 
 %input('pause: produce_feature 26')
 %%% Cluster structure is
@@ -71,6 +81,14 @@ else
     if size(pts,1) > k
         clusters = k_lines(k,pts);
     end
+    %%% If there are only two points in a cluster, discard them %%%
+    for c_ndx = size(clusters,2):-1:1
+        num_pts = sum(clusters(:,c_ndx) > 0);
+        if num_pts < 3
+            clusters(:,c_ndx) = [];
+        end
+    end
+    %%%
     var_orth_mult = zeros(size(clusters,2),1);
     Line_mult = zeros(size(clusters,2),4);
     %clusters
@@ -99,6 +117,14 @@ else
     if size(pts,1) > k
         clusters = k_lines(k,pts);
     end
+    %%% If there are only two points in a cluster, discard them %%%
+    for c_ndx = size(clusters,2):-1:1
+        num_pts = sum(clusters(:,c_ndx) > 0);
+        if num_pts < 3
+            clusters(:,c_ndx) = [];
+        end
+    end
+    %%%
     var_orth_mult = zeros(size(clusters,2),1);
     Line_mult = zeros(size(clusters,2),4);
     %clusters

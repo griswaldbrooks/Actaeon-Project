@@ -28,6 +28,14 @@ if size(pts,1) > k
     clusters = k_lines(k,pts);
 end
 
+%%% If there are only two points in a cluster, discard them %%%
+for c_ndx = size(clusters,2):-1:1
+    num_pts = sum(clusters(:,c_ndx) > 0);
+    if num_pts < 3
+        clusters(:,c_ndx) = [];
+    end
+end
+%%%
 
 %input('pause: produce_feature 26')
 %%% Cluster structure is
@@ -56,12 +64,12 @@ sum_var_orth_mult = sum(var_orth_mult);
 % sum_var_orth_mult
 %input('pause: produce_feature 49')
 if (var_orth_single < sum_var_orth_mult) && (var_orth_single < VAR_THRESH)
-%     %%% Plot Single Line
-%     line([Line_single(1),Line_single(3)],[Line_single(2),Line_single(4)], 'Color', 'r')
+    %%% Plot Single Line
+%    line([Line_single(1),Line_single(3)],[Line_single(2),Line_single(4)], 'Color', 'r')
     ftrs = Line_single;
     %clusters
 elseif (sum_var_orth_mult < VAR_THRESH)
-%     %%% Plot Multiple Lines %%%
+    %%% Plot Multiple Lines %%%
 %     for l_ndx = 1:size(Line_mult,1)
 %         line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
 %     end
@@ -71,6 +79,14 @@ else
     if size(pts,1) > k
         clusters = k_lines(k,pts);
     end
+    %%% If there are only two points in a cluster, discard them %%%
+    for c_ndx = size(clusters,2):-1:1
+        num_pts = sum(clusters(:,c_ndx) > 0);
+        if num_pts < 3
+            clusters(:,c_ndx) = [];
+        end
+    end
+    %%%
     var_orth_mult = zeros(size(clusters,2),1);
     Line_mult = zeros(size(clusters,2),4);
     %clusters
@@ -117,9 +133,9 @@ else
     
     
     
-        for l_ndx = 1:size(Line_mult,1)
-            line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
-        end
+%         for l_ndx = 1:size(Line_mult,1)
+%             line([Line_mult(l_ndx,1),Line_mult(l_ndx,3)],[Line_mult(l_ndx,2),Line_mult(l_ndx,4)], 'Color', 'b')
+%         end
     ftrs = Line_mult;
         
         

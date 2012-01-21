@@ -139,30 +139,6 @@ for t = 0:dt:600
 %    plot(r_pose(1)/8 + 15,r_pose(2)/8 + 15,'ro')
 %    plot(r_pose(2)/4 + 15,r_pose(1)/4 + 15,'ro')
     plot(r_pose(1),r_pose(2),'ro')
-
-
-    
-    % *** Potential Field Navigation *** %
-	vp = v;
-    omp = om;
-    [v, om] = PocLoc1(laser_rp);
-    
-    %%% MOTION NOISE %%%
-    %v = v + .2*rand(1);
-    %om = om + .01*rand(1);
-    
-    %%% MOTION DAMPENING %%%
-    v = 0.1*v + 0.9*vp;
-    om = 0.1*om + 0.9*omp;
-
-    %%% MOTION MODEL %%%
-    r_pose(3) = r_pose(3) + (om + 0.01*rand(1) + 0.01)*dt;
-    r_pose(1) = r_pose(1) + (v + 0.2*rand(1) + 0.2)*cos(r_pose(3));
-    r_pose(2) = r_pose(2) + (v + 0.2*rand(1) + 0.2)*sin(r_pose(3));
-    
-    r_pose_est(3) = r_pose_est(3) + om*dt;
-    r_pose_est(1) = r_pose_est(1) + v*cos(r_pose_est(3));
-    r_pose_est(2) = r_pose_est(2) + v*sin(r_pose_est(3));
    
 
 %     %%% SLAM %%%
@@ -185,6 +161,7 @@ for t = 0:dt:600
     [r_pose_est,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmarks);
     r_pose
     r_pose_est
+    landmarks
     %input('pause: course_sim 186')
     %map = slam_mean(laser_rp,r_pose_est,map);
     map = occ_map_lo(laser_rp,r_pose_est,map);
@@ -216,6 +193,28 @@ for t = 0:dt:600
 %     for iter = 1:2:length(map)
 %         line(map(iter:iter+1,1),map(iter:iter+1,2))
 %     end
+
+% *** Potential Field Navigation *** %
+	vp = v;
+    omp = om;
+    [v, om] = PocLoc1(laser_rp);
+    
+    %%% MOTION NOISE %%%
+    %v = v + .2*rand(1);
+    %om = om + .01*rand(1);
+    
+    %%% MOTION DAMPENING %%%
+    v = 0.1*v + 0.9*vp;
+    om = 0.1*om + 0.9*omp;
+
+    %%% MOTION MODEL %%%
+    r_pose(3) = r_pose(3) + (om + 0.01*rand(1) + 0.01)*dt;
+    r_pose(1) = r_pose(1) + (v + 0.2*rand(1) + 0.2)*cos(r_pose(3));
+    r_pose(2) = r_pose(2) + (v + 0.2*rand(1) + 0.2)*sin(r_pose(3));
+    
+    r_pose_est(3) = r_pose_est(3) + om*dt;
+    r_pose_est(1) = r_pose_est(1) + v*cos(r_pose_est(3));
+    r_pose_est(2) = r_pose_est(2) + v*sin(r_pose_est(3));
     pause(1/2048)
 end
 

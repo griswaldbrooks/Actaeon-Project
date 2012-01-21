@@ -7,7 +7,7 @@ function [r_pose,xn,yn,landmarks] = classifier(laser_rp,r_pose,xn,yn,map,landmar
 % landmarks = t_land;
 
 %%% Merge Previous Landmarks %%%
-landmarks = merge_landmarks2(landmarks);
+%landmarks = merge_landmarks2(landmarks);
 
 %%% Correct for Translation Error %%%
 %[r_pose]=correct_trans(r_pose,laser_rp,landmarks);
@@ -29,7 +29,7 @@ end
 
 %%% Generate Line Landmark Hypotheses %%%
 current_hypos = generate_hypotheses(vv_pts);
-%current_hypos
+current_hypos
 
 %%% Correct for Orientation Error %%%
 %[r_pose,xn,yn] = correct_orient(current_hypos,r_pose,xn,yn);
@@ -45,7 +45,7 @@ end
 landmarks = associate_hypotheses(landmarks, current_hypos);
 
 %%% DRAW LANDMARKS %%%
-for iter = 1:2:size(landmarks,1)
+for iter = 1:size(landmarks,1)
     line([landmarks(iter,1),landmarks(iter,3)],[landmarks(iter,2),landmarks(iter,4)],'Color','g')
 end
 
