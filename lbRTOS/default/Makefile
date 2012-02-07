@@ -37,7 +37,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Include Directories
-INCLUDES = -I"C:\Robot\lbRTOS\Source\portable\GCC\ATMega323" -I"C:\Robot\lbRTOS\Source\include" -I"C:\Robot\lbRTOS\." -I"C:\Robot\lbRTOS\SoR" 
+INCLUDES = -I"C:\Robot\Actaeon-Project\lbRTOS\Source\portable\GCC\ATMega323" -I"C:\Robot\Actaeon-Project\lbRTOS\Source\include" -I"C:\Robot\Actaeon-Project\lbRTOS\." -I"C:\Robot\Actaeon-Project\lbRTOS\SoR" 
 
 ## Libraries
 LIBS = -lm -lc 
@@ -49,9 +49,7 @@ OBJECTS = lbRTOS.o list.o queue.o tasks.o port.o croutine.o heap_1.o timer640.o 
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) lbRTOS.hex lbRTOS.eep lbRTOS.lss size
-
-## Compile
+all: $(TARGET) lbRTOS.hex lbRTOS.eep lbRTOS.lss## Compile
 lbRTOS.o: ../lbRTOS.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
@@ -103,10 +101,6 @@ $(TARGET): $(OBJECTS)
 
 %.lss: $(TARGET)
 	avr-objdump -h -S $< > $@
-
-size: ${TARGET}
-	@echo
-	@avr-size -C --mcu=${MCU} ${TARGET}
 
 ## Clean target
 .PHONY: clean

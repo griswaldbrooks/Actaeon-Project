@@ -30,33 +30,27 @@
 
 float v_command = 0;	//wheel velocity command, used by PI controller, controlled by velocity filter
 float inst_cmd_vel = 0;		//instantaneous velocity command manipulated by other functions, input to the vel filter
-//signed int v_offset = 0; //velocity offset for turning
-signed int v_left = 0;	//velocity command to left wheel
-signed int v_right = 0;	//velocity command to right wheel
+signed int v_offset = 0; //velocity offset for turning
 
 int spray_time = 125;
 
 //encoder measurements
-s16 LEFTVel_current = 0;  	//linear wheel velocity in cm/sec
-u08 LEFTVel_ready = UNSET;	//left velocity ready flag
-s32 LEFTDis_current = 0;  	//rolled distance in cm since power on
+s16 LEFTVel_current = 0;  //linear wheel velocity in cm/sec
+s32 LEFTDis_current = 0;  //rolled distance in cm since power on
 s32 LEFTDis_prev = 0;
-s16 dLEFTDis = 0;		  	//Dis_current - Dis_prev
+s16 dLEFTDis = 0;		  //Dis_current - Dis_prev
 
-s16 RIGHTVel_current = 0; 	//linear wheel velocity in cm/sec
-u08 RIGHTVel_ready = UNSET; //right velocity ready flag
-s32 RIGHTDis_current = 0; 	//rolled distance in cm since power on
+s16 RIGHTVel_current = 0; //linear wheel velocity in cm/sec
+s32 RIGHTDis_current = 0; //rolled distance in cm since power on
 s32 RIGHTDis_prev = 0;
-s16 dRIGHTDis = 0;		  	//Dis_current - Dis_prev
+s16 dRIGHTDis = 0;		  //Dis_current - Dis_prev
 
 s16 dRL;
 
 float enc_heading = 0;
-float enc_ang_vel = 0;	//Angular velocity of robot
 float dis_enc_heading;
 
-float cmd_angle = 0; 	//angle in radians
-float cmd_ang_vel = 0; //commanded angular velocity in radians/sec
+s16 cmd_angle = 0; 	//angle in degrees
 s32 cmd_dist = 0;	//commanded distance in cm
 
 float correction_angle = 0;
@@ -155,17 +149,6 @@ void fwdSer_R(unsigned char c){
 	static char d_flag;
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
-
-// PID variables
-	s16 error;
-	static float acc_error = 0;
-	const float KP = (0.9/(676.1129*0.1597))/1;
-	const float TI = (0.1597/0.3)/1;
-	const float KI = KP/TI;
-	signed int v_out = 0;
-	
-	wheel_R_on();
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -199,25 +182,6 @@ void fwdSer_R(unsigned char c){
 				RIGHTVel_current = CM_TICK * retConv_s16(&vel_rough);
 				v_flag = UNSET;
 				v_iter = 0;
-				RIGHTVel_ready = SET;
-
-// PID correction
-			error = v_right - (-RIGHTVel_current);
-			v_out = (signed int)(KP*error + KI*acc_error);
-			
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-
-			if(v_out > 36){v_out = 36;}
-			if(v_out < -36){v_out = -36;}			
-
-			wheel_R(-v_out);
-
-			rprintf("\t%d\n",-RIGHTVel_current);
-			acc_error += error;
-
 			//	rprintf("RRR VVV: ");
 			//	rprintfu16(RIGHTVel_current);
 			//	rprintf("\n");
@@ -252,16 +216,6 @@ void fwdSer_L(unsigned char c){
 	static char d_flag;
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
-
-// PID variables
-	s16 error;
-	static float acc_error = 0;
-	const float KP = (0.9/(796.1475*0.1206))/1;
-	const float TI = (0.1206/0.3)/1;
-	const float KI = KP/TI;
-	signed int v_out = 0;
-	wheel_L_on();
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -295,28 +249,7 @@ void fwdSer_L(unsigned char c){
 				LEFTVel_current = CM_TICK * retConv_s16(&vel_rough);
 				v_flag = UNSET;
 				v_iter = 0;
-				LEFTVel_ready = SET;
-// PID correction
-			error = v_left - LEFTVel_current;
-			v_out = (signed int)(KP*error + KI*acc_error);
-			
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-			
-			acc_error += error;
-
-			if(v_out > 36){v_out = 36;}
-			if(v_out < -36){v_out = -36;}
-			
-			wheel_L(v_out);
-			
-			rprintf("%d, ",LEFTVel_current);
-
-
-			//	rprintf("LEFTVel_ready: %d\n", LEFTVel_ready);
-			//	rprintf("LLL VVV: ");
+			//	rprintf("RRR VVV: ");
 			//	rprintfu16(RIGHTVel_current);
 			//	rprintf("\n");
 			}
@@ -531,93 +464,28 @@ void vPID_L(void* pvParameters){
 	portTickType xLastWakeTime;
 	
 	s16 error;
-	float acc_error = 0;
-	//float KP = 0.25;
-	//float KI = 0.125;
-	float KP = (0.9/(796.1475*0.1206))/1;
-	float TI = (0.1206/0.3)/1;
-	float KI = KP/TI;
-	signed int v_out = 0;
-	char key;
+	s16 acc_error = 0;
+	float KP = 0.25;
+	float KI = 0.125;
+	
+
 	wheel_L_on();
 
 	for(;;){
+			signed int v_out = v_command + v_offset;
+			error = v_out - LEFTVel_current;
 			
-			error = v_left - LEFTVel_current;
-			
-			v_out = (signed int)(KP*error + KI*acc_error);
-			//v_out += (signed int)((KP * error) + (KI * acc_error));
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-			
+			v_out += (signed int)((KP * error) + (KI * acc_error));
 			acc_error += error;
 
 			if(v_out > 36){v_out = 36;}
 			if(v_out < -36){v_out = -36;}
 			
-			
 			taskENTER_CRITICAL();
 			wheel_L(v_out);
 			taskEXIT_CRITICAL();
-			rprintf("%d, ",LEFTVel_current);
-
-			key = uart1GetByte();
-			if(key == 'q'){
-				KP += 0.001;
-				rprintf("\tKP: ");
-				rprintfFloat(5,KP);
-				rprintfCRLF();
-			}
-			else if (key == 'a'){
-				KP -= 0.001;
-				rprintf("\tKP: ");
-				rprintfFloat(5,KP);
-				rprintfCRLF();
-			}
-			else if (key == 'w'){
-				KI += 0.001;
-				rprintf("\tKI: ");
-				rprintfFloat(5,KI);
-				rprintfCRLF();
-			}
-			else if (key == 's'){
-				KI -= 0.001;
-				rprintf("\tKI: ");
-				rprintfFloat(5,KI);
-				rprintfCRLF();
-			}
-			else if (key == 'p'){
-				rprintf("\tKP: ");
-				rprintfFloat(5,KP);
-				rprintfCRLF();
-				rprintf("\tKI: ");
-				rprintfFloat(5,KI);
-				rprintfCRLF();
-				rprintf("\terror: ");
-				rprintfFloat(5,error);
-				rprintfCRLF();
-				rprintf("\tacc_error: ");
-				rprintfFloat(5,acc_error);
-				rprintfCRLF();
-			}
-			else if(key == 'r'){
-				acc_error = 0;
-				rprintf("\tKP: ");
-				rprintfFloat(5,KP);
-				rprintfCRLF();
-				rprintf("\tKI: ");
-				rprintfFloat(5,KI);
-				rprintfCRLF();
-				rprintf("\terror: ");
-				rprintfFloat(5,error);
-				rprintfCRLF();
-				rprintf("\tacc_error: ");
-				rprintfFloat(5,acc_error);
-				rprintfCRLF();
-			}
-		vTaskDelayUntil(&xLastWakeTime, (40 / portTICK_RATE_MS));
+			
+		vTaskDelayUntil(&xLastWakeTime, (50 / portTICK_RATE_MS));
 	}
 
 }
@@ -627,36 +495,27 @@ void vPID_R(void* pvParameters){
 	portTickType xLastWakeTime;
 	s16 error;
 	s16 acc_error = 0;
-	//float KP = 0.25;
-	//float KI = 0.125;
-	float KP = (0.9/(676.1129*0.1597))/1;
-	float TI = (0.1597/0.3)/1;
-	float KI = KP/TI;
-	signed int v_out = 0;
-	
+	float KP = 0.25;
+	float KI = 0.125;
+
 	wheel_R_on();
 
 	char adj;
 	for(;;){
 			
-			
-			error = v_right - (-RIGHTVel_current);
-			v_out = (signed int)(KP*error + KI*acc_error);
-			//v_out += (signed int)((KP * error) + (KI * acc_error));
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
+			signed int v_out = v_command - v_offset;
+			error = v_command - (-RIGHTVel_current);
+			v_out += (signed int)((KP * error) + (KI * acc_error));
 			if(v_out > 36){v_out = 36;}
 			if(v_out < -36){v_out = -36;}
 			
 			taskENTER_CRITICAL();
 			wheel_R(-v_out);
 			taskEXIT_CRITICAL();
-			rprintf("\t%d\n",-RIGHTVel_current);
+
 			acc_error += error;
 			
-		vTaskDelayUntil(&xLastWakeTime, (40 / portTICK_RATE_MS));
+		vTaskDelayUntil(&xLastWakeTime, (50 / portTICK_RATE_MS));
 	}
 }
 
@@ -775,39 +634,22 @@ void vRampVel(){
 	v_command = 0;
 	inst_cmd_vel = 25;
 	vTaskDelayUntil(&xLastWakeTime, 10000 / portTICK_RATE_MS);	//leave velocity at zero briefly
-	wheel_L_on();
-	wheel_R_on();
-	wheel_L(25);
-	wheel_R(-25);
-	v_left = v_right = 25;
 
 	for(;;){
 		
 		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
 		//if(v_command != inst_cmd_vel){v_command++;}
-		v_command = 25;
-		v_left = v_right = v_command;
-		wheel_L(v_left);
-		wheel_R(-v_right);
-		/*
 		v_command += (1/(inst_cmd_vel - v_command))*(inst_cmd_vel);
 
 		if(v_command > 25){v_command = 25;}
 		if(v_command <  0){v_command =  0;}
 		
-		rprintf("v_command: ");
-		rprintfFloat(5,v_command);
-		rprintfCRLF();
-		*/
-		//rprintf("%d\n",LEFTVel_current);
-		//rprintf("LEFTVel_current: %d\n",LEFTVel_current);
-		//rprintf("RIGHTVel_current: %d\n",RIGHTVel_current);
 	
 	}
 }
 
 void vEnc_UpdatePose(){
-	
+	float enc_ang_vel = 0;
 	float elapsed_time;
 
 	for(;;){
@@ -821,15 +663,7 @@ void vEnc_UpdatePose(){
 		//dis_enc_heading += sin((dRL)/ ROBOT_DIAMETER);
 		//dRIGHTDis = dLEFTDis = 0;
 		enc_heading += enc_ang_vel * elapsed_time;
-		cmd_ang_vel = pow(cmd_angle - enc_heading,2)/(pow(cmd_angle - enc_heading,2) + pow(3,2));
-		/*
-		rprintf("cmd_ang_vel: ");
-		rprintfFloat(5,cmd_ang_vel);
-		rprintfCRLF();
-		rprintf("enc_heading: ");
-		rprintfFloat(5,enc_heading);
-		rprintfCRLF();
-		*/
+
 
 	}
 }
@@ -844,10 +678,7 @@ void vUpdatePose(){
 
 	for(;;){
 		robot.heading = (180 * enc_heading) / M_PI; 
-		//v_offset = (0.5 * robot.heading) + CMD_K*cmd_angle + COR_K*correction_angle;
-		v_left = (signed int)(v_command - cmd_ang_vel*ROBOT_RADIUS);
-		//rprintf("v_left: %d\n",v_left);
-		v_right = (signed int)(v_command + cmd_ang_vel*ROBOT_RADIUS);
+		v_offset = (0.5 * robot.heading) + CMD_K*cmd_angle + COR_K*correction_angle;
 		robot.vel = (LEFTVel_current + (-RIGHTVel_current)) / 2;
 		
 		dRIGHTDis = (-RIGHTDis_current) - (-RIGHTDis_prev); 
@@ -894,79 +725,36 @@ void vScript(){
 
 	for(;;){
 		cmd_angle = 0;
-		rprintf("cmd_angle: ");
-		rprintfFloat(5, cmd_angle);
-		rprintfCRLF();
+		rprintf("%d\n", cmd_angle);
 		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
-		cmd_angle = 90*(M_PI/180);
-		rprintf("cmd_angle: ");
-		rprintfFloat(5, cmd_angle);
-		rprintfCRLF();
+		cmd_angle = 90;
+		rprintf("%d\n", cmd_angle);
 		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
 		cmd_angle = 0;
-		//rprintf("%d\n", cmd_angle)
+		rprintf("%d\n", cmd_angle);
 		
 	
 	}
 }
 
-char key;
-float elapsed_time;
-float current_time = 0;
-float previous_time = 0;
+
 
 int main(void)
 {
 	prvSetupHardware();
 
-	key = uart1GetByte();
-	delay_ms(500);
-/*
-	while( key != 's'){
-		key = uart1GetByte();
-	}
-*/	
-/*
-	reset_timer0();
-	wheel_R_on();
-	wheel_R(25);
-	rprintf("Right wheel started.\n");
-	while( key != 'r'){
-		
-		if(RIGHTVel_ready){
-			previous_time = current_time;
-			current_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-			//rprintfCRLF();
-			rprintf("%d\n",RIGHTVel_current);
-			RIGHTVel_ready = UNSET;
-		}
-		key = uart1GetByte();
-	}
-	wheel_R_off();
-
-	elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-	rprintf("Elapsed Time: ");
-	rprintfFloat(10,elapsed_time);
-	rprintfCRLF();
-	rprintf("dt: ");
-	rprintfFloat(10,current_time - previous_time);
-	rprintfCRLF();
-
-	for(;;);
-*/
 	
-	v_left = v_right = 25;
 
 	xTaskCreate(vLight0On, "Light0", 100, NULL, 1, NULL);
 	xTaskCreate(vLight1On, "Light1", 100, NULL, 1, NULL);
-//	xTaskCreate(vRampVel, "RampVel", 100, NULL, 1, NULL);
-//	xTaskCreate(vUpdatePose, "UpdatePs", 500, NULL, 1, NULL);
-//	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
+	xTaskCreate(vRampVel, "RampVel", 100, NULL, 1, NULL);
+	xTaskCreate(vUpdatePose, "UpdatePs", 500, NULL, 1, NULL);
+	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
 //	xTaskCreate(vServoOsc, "ServoGo", 200, NULL, 1, NULL);
 //	xTaskCreate(vServoTm, "ServoTm", 200, NULL, 1, NULL);
 	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
 	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
-//	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
+	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
 
 
 	vTaskStartScheduler();
