@@ -156,16 +156,6 @@ void fwdSer_R(unsigned char c){
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
 
-// PID variables
-	s16 error;
-	static float acc_error = 0;
-	const float KP = (0.9/(676.1129*0.1597))/1;
-	const float TI = (0.1597/0.3)/1;
-	const float KI = KP/TI;
-	signed int v_out = 0;
-	
-	wheel_R_on();
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -200,23 +190,6 @@ void fwdSer_R(unsigned char c){
 				v_flag = UNSET;
 				v_iter = 0;
 				RIGHTVel_ready = SET;
-
-// PID correction
-			error = v_right - (-RIGHTVel_current);
-			v_out = (signed int)(KP*error + KI*acc_error);
-			
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-
-			if(v_out > 36){v_out = 36;}
-			if(v_out < -36){v_out = -36;}			
-
-			wheel_R(-v_out);
-
-			rprintf("\t%d\n",-RIGHTVel_current);
-			acc_error += error;
 
 			//	rprintf("RRR VVV: ");
 			//	rprintfu16(RIGHTVel_current);
@@ -253,15 +226,6 @@ void fwdSer_L(unsigned char c){
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
 
-// PID variables
-	s16 error;
-	static float acc_error = 0;
-	const float KP = (0.9/(796.1475*0.1206))/1;
-	const float TI = (0.1206/0.3)/1;
-	const float KI = KP/TI;
-	signed int v_out = 0;
-	wheel_L_on();
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -296,24 +260,6 @@ void fwdSer_L(unsigned char c){
 				v_flag = UNSET;
 				v_iter = 0;
 				LEFTVel_ready = SET;
-// PID correction
-			error = v_left - LEFTVel_current;
-			v_out = (signed int)(KP*error + KI*acc_error);
-			
-			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-			
-			acc_error += error;
-
-			if(v_out > 36){v_out = 36;}
-			if(v_out < -36){v_out = -36;}
-			
-			wheel_L(v_out);
-			
-			rprintf("%d, ",LEFTVel_current);
-
 
 			//	rprintf("LEFTVel_ready: %d\n", LEFTVel_ready);
 			//	rprintf("LLL VVV: ");
@@ -500,7 +446,7 @@ void prvSetupHardware(){
 /*************************************************/
 
 
-void wheel_L(signed int cmd_vel){
+void wheel_L(float cmd_vel){
 		if(cmd_vel > 36){cmd_vel = 36;}
 		if(cmd_vel < -36){cmd_vel = -36;}
 		
@@ -513,7 +459,7 @@ void wheel_L(signed int cmd_vel){
 
 }
 
-void wheel_R(signed int cmd_vel){
+void wheel_R(float cmd_vel){
 		if(cmd_vel > 36){cmd_vel = 36;}
 		if(cmd_vel < -36){cmd_vel = -36;}
 				
@@ -530,30 +476,31 @@ void vPID_L(void* pvParameters){
 	
 	portTickType xLastWakeTime;
 	
-	s16 error;
+	float error;
 	float acc_error = 0;
-	//float KP = 0.25;
-	//float KI = 0.125;
-	float KP = (0.9/(796.1475*0.1206))/1;
-	float TI = (0.1206/0.3)/1;
-	float KI = KP/TI;
-	signed int v_out = 0;
+	const float KP = (0.9/(796.1475*0.1206))/1;
+	const float TI = (0.1206/0.3)/1;
+	const float KI = KP/TI;
+	float v_out = 0;
 	char key;
+	
 	wheel_L_on();
 
 	for(;;){
-			
+
 			error = v_left - LEFTVel_current;
 			
-			v_out = (signed int)(KP*error + KI*acc_error);
-			//v_out += (signed int)((KP * error) + (KI * acc_error));
+			v_out = (float)(KP*error + KI*acc_error);
+			taskENTER_CRITICAL();
+			rprintf("\nLVC: %d, v_out: %d\n",LEFTVel_current,(int)v_out);
+			taskEXIT_CRITICAL();
 			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
-			
+	//		if((v_out >= 36) || (v_out <= -36)){
+	//			v_out -= KI*acc_error;
+	//		}
+		//if(LEFTVel_ready){	
 			acc_error += error;
-
+		//}
 			if(v_out > 36){v_out = 36;}
 			if(v_out < -36){v_out = -36;}
 			
@@ -561,9 +508,10 @@ void vPID_L(void* pvParameters){
 			taskENTER_CRITICAL();
 			wheel_L(v_out);
 			taskEXIT_CRITICAL();
-			rprintf("%d, ",LEFTVel_current);
+			
 
 			key = uart1GetByte();
+			/*
 			if(key == 'q'){
 				KP += 0.001;
 				rprintf("\tKP: ");
@@ -617,7 +565,9 @@ void vPID_L(void* pvParameters){
 				rprintfFloat(5,acc_error);
 				rprintfCRLF();
 			}
-		vTaskDelayUntil(&xLastWakeTime, (40 / portTICK_RATE_MS));
+			*/
+
+		vTaskDelayUntil(&xLastWakeTime, (100 / portTICK_RATE_MS));
 	}
 
 }
@@ -626,12 +576,10 @@ void vPID_R(void* pvParameters){
 		
 	portTickType xLastWakeTime;
 	s16 error;
-	s16 acc_error = 0;
-	//float KP = 0.25;
-	//float KI = 0.125;
-	float KP = (0.9/(676.1129*0.1597))/1;
-	float TI = (0.1597/0.3)/1;
-	float KI = KP/TI;
+	float acc_error = 0;
+	const float KP = (0.9/(676.1129*0.1597))/1;
+	const float TI = (0.1597/0.3)/1;
+	const float KI = KP/TI;
 	signed int v_out = 0;
 	
 	wheel_R_on();
@@ -642,25 +590,91 @@ void vPID_R(void* pvParameters){
 			
 			error = v_right - (-RIGHTVel_current);
 			v_out = (signed int)(KP*error + KI*acc_error);
-			//v_out += (signed int)((KP * error) + (KI * acc_error));
 			// Anti windup
-			if((v_out >= 36) || (v_out <= -36)){
-				v_out -= KI*acc_error;
-			}
+	//		if((v_out >= 36) || (v_out <= -36)){
+	//			v_out -= KI*acc_error;
+	//		}
 			if(v_out > 36){v_out = 36;}
 			if(v_out < -36){v_out = -36;}
 			
 			taskENTER_CRITICAL();
 			wheel_R(-v_out);
 			taskEXIT_CRITICAL();
-			rprintf("\t%d\n",-RIGHTVel_current);
+			rprintf("\t%d, v_right: %d\n",-RIGHTVel_current,v_right);
 			acc_error += error;
 			
-		vTaskDelayUntil(&xLastWakeTime, (40 / portTICK_RATE_MS));
+		vTaskDelayUntil(&xLastWakeTime, (100 / portTICK_RATE_MS));
 	}
 }
 
+void vPID(void* pvParameters){
+	
+	portTickType xLastWakeTime;
+	
+	float error_L;
+	float acc_error_L = 0;
+	float error_R;
+	float acc_error_R = 0;
 
+	const float KP_L = (0.9/(796.1475*0.1206));
+	const float TI_L = (0.1206/0.3);
+	const float KI_L = KP_L/TI_L;
+
+	const float KP_R = (0.9/(676.1129*0.1597));
+	const float TI_R = (0.1597/0.3);
+	const float KI_R = KP_R/TI_R;
+	
+	float v_out_L = 0;
+	float v_out_R = 0;
+	
+	wheel_L_on();
+	wheel_R_on();
+
+	for(;;){
+
+			error_L = v_left - LEFTVel_current;
+			error_R = v_right - (-RIGHTVel_current);
+			
+			v_out_L = KP_L*error_L + KI_L*acc_error_L;
+			v_out_R = KP_R*error_R + KI_R*acc_error_R;
+		
+			acc_error_L += error_L;
+			acc_error_R += error_R;
+
+			taskENTER_CRITICAL();
+			rprintf("LEFTVel: %d\tv_out_L: %d\t", LEFTVel_current, (int)v_out_L);
+			rprintf("RIGHTVel: %d\tv_out_R: %d\n",-RIGHTVel_current,(int)v_out_R);
+			taskEXIT_CRITICAL();
+
+			if(v_out_L > 36){
+				v_out_L = 36;
+				acc_error_L = 1500;
+				}
+			else if(v_out_L < -36){
+				v_out_L = -36;
+				acc_error_L = -1500;
+				}
+
+			if(v_out_R > 36){
+				v_out_R = 36;
+				acc_error_R = 1500;
+				}
+			else if(v_out_R < -36){
+				v_out_R = -36;
+				acc_error_R = -1500;
+				}
+			
+			
+			taskENTER_CRITICAL();
+			wheel_L(v_out_L);
+			wheel_R(-v_out_R);
+			taskEXIT_CRITICAL();
+			
+
+		vTaskDelayUntil(&xLastWakeTime, (100 / portTICK_RATE_MS));
+	}
+
+}
 
 void vLight0On(void *pvParameters){
 	portTickType xLastWakeTime;
@@ -952,8 +966,10 @@ int main(void)
 	rprintfFloat(10,current_time - previous_time);
 	rprintfCRLF();
 
-	for(;;);
-*/
+*/	
+
+//	for(;;);
+
 	
 	v_left = v_right = 25;
 
@@ -964,8 +980,9 @@ int main(void)
 //	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
 //	xTaskCreate(vServoOsc, "ServoGo", 200, NULL, 1, NULL);
 //	xTaskCreate(vServoTm, "ServoTm", 200, NULL, 1, NULL);
-	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
-	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
+//	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
+//	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
+	xTaskCreate(vPID, "vPID", 500, NULL, 2, NULL);
 //	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
 
 
