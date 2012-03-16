@@ -24,47 +24,36 @@
 //robot radius
 #define ROBOT_RADIUS	8.2 //cm
 #define ROBOT_DIAMETER	16.8 //cm
+#define IR_TO_EDGE		10	//cm
+
+#define NUM_IR_READS	10
+
+float v_command = 0;	//wheel velocity command, used by PI controller, controlled by velocity filter
+float inst_cmd_vel = 0;		//instantaneous velocity command manipulated by other functions, input to the vel filter
+signed int v_offset = 0; //velocity offset for turning
 
 int spray_time = 125;
 
 //encoder measurements
-s16 LEFTVel_current = 0;  	//linear wheel velocity in cm/sec
-u08 LEFTVel_ready = UNSET;	//left velocity ready flag
-s32 LEFTDis_current = 0;  	//rolled distance in cm since power on
+s16 LEFTVel_current = 0;  //linear wheel velocity in cm/sec
+s32 LEFTDis_current = 0;  //rolled distance in cm since power on
 s32 LEFTDis_prev = 0;
-s16 dLEFTDis = 0;		  	//Dis_current - Dis_prev
+s16 dLEFTDis = 0;		  //Dis_current - Dis_prev
 
-s16 RIGHTVel_current = 0; 	//linear wheel velocity in cm/sec
-u08 RIGHTVel_ready = UNSET; //right velocity ready flag
-s32 RIGHTDis_current = 0; 	//rolled distance in cm since power on
+s16 RIGHTVel_current = 0; //linear wheel velocity in cm/sec
+s32 RIGHTDis_current = 0; //rolled distance in cm since power on
 s32 RIGHTDis_prev = 0;
-s16 dRIGHTDis = 0;		  	//Dis_current - Dis_prev
+s16 dRIGHTDis = 0;		  //Dis_current - Dis_prev
 
 s16 dRL;
 
 float enc_heading = 0;
-float enc_ang_vel = 0;	//Angular velocity of robot
 float dis_enc_heading;
 
-float v_command = 0;	//wheel velocity command, used by PI controller, controlled by velocity filter
-
-float cmd_angle = 0; 	//angle in radians
-float cmd_ang_vel = 0; //commanded angular velocity in radians/sec
+s16 cmd_angle = 0; 	//angle in degrees
 s32 cmd_dist = 0;	//commanded distance in cm
 
-#define buffer_size		1024
-uint8_t lds_buffer[buffer_size];
-uint16_t lds_buffer_write_ndx = 0;
-uint16_t lds_buffer_read_ndx = 0;
-
-typedef struct {
-	uint8_t index;
-	uint16_t motor_speed;
-	uint32_t distances[4];
-	uint32_t intensities[4];
-
-} LDS_FRAME;
-
+float correction_angle = 0;
 
 typedef struct {
 	float heading;
@@ -149,70 +138,7 @@ s32 retConv_s32(char* ch_head){
 	int_val = ((int_val<<4) | iv8);
 	return int_val;
 }
-/*
-uint8_t parse_frame(){
-    // Array for use by the error checker
-    uint16_t[10] chk_data;
 
-    // Read start byte
-    uint8_t start_byte;
-    boost::asio::read(serial, boost::asio::buffer(&start_byte, 1));
-    // If the byte read in is not the start byte (0xFA), then this is not the beginning of a frame
-    if(start_byte != 0xFA) return false; 
-
-    // Read index
-    boost::asio::read(serial, boost::asio::buffer(&index,1));	
-    // If the byte proceeding the start byte does not look like an index, then is is not the beginning of a frame
-    if((index < 0xA0)||(index > 0xF9)) return false;
-
-    // Add these bytes for the error checker
-    chk_data[0] = (index << 8) + start_byte;
-
-    // Read motor speed
-    //   Motor speed is given as little endian from the LDS, but by reading the motor speed into a uint16_t rather
-    //   than a uint8_t array, the bits are ordered correctly. The resultant uint16_t (motor_speed) is a fixed point number,
-    //   structured as follows:
-    //   MSB                                                               LSB
-    //   15  14  13  12  11  10  9   8   7   6    5    4    3    2    1    0
-    //   512 256 128 64  32  16  8   4   2   1 .  1/2  1/4  1/8  1/16 1/32 1/64
-    //
-    boost::asio::read(serial, boost::asio::buffer(&motor_speed,2));
-    // Add these bytes for the error checker
-    chk_data[1] = motor_speed;
-				
-    // Read distances, intensities, and flags
-    for(uint8_t itr = 0; itr < 4; itr++) {
-      // Read in the four distance and intensity bytes
-      boost::array<uint8_t, 4> di_bytes;
-      boost::asio::read(serial, boost::asio::buffer(&di_bytes, 4));
-      
-      // The invalid and strength flags are the MSB and adjacent bit of the second (indexwise) distance byte
-      invalid[itr] = (bool)(di_bytes[1] & 0x80);
-      strength_warning[itr] = (bool)(di_bytes[1] & 0x40);
-
-      // Distance and intensity bytes are read in little endian, and therefore need to be switched and concatenated
-      // The second distance byte (indexwise) is masked to eliminate the invalid and strength flags from the measurement
-      if(invalid[itr]){ // If this measurement is invalid, set it to zero
-	distance[itr]  = 0;
-      }
-      else{
-	distance[itr]  = ((di_bytes[1] & 0x3F) << 8) + di_bytes[0];
-      }
-
-      intensity[itr] = (di_bytes[3] << 8) + di_bytes[2];
-      
-      // Add these bytes for the error checker
-      chk_data[2*itr + 2] = (di_bytes[1] << 8) + di_bytes[0];
-      chk_data[2*itr + 3] = (di_bytes[3] << 8) + di_bytes[2];
-    }
-
-    // Read checksum
-    // Checksum is given in little endian, but because it is read into a uint16_t, it is ordered correctly
-    boost::asio::read(serial, boost::asio::buffer(&checksum, 2));
-    
-    return error_checker(chk_data, checksum);
-}  
-*/
 
 void fwdSer_R(unsigned char c){
 //posts velocity and distance data to global variable
@@ -223,7 +149,6 @@ void fwdSer_R(unsigned char c){
 	static char d_flag;
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -257,8 +182,6 @@ void fwdSer_R(unsigned char c){
 				RIGHTVel_current = CM_TICK * retConv_s16(&vel_rough);
 				v_flag = UNSET;
 				v_iter = 0;
-				RIGHTVel_ready = SET;
-
 			//	rprintf("RRR VVV: ");
 			//	rprintfu16(RIGHTVel_current);
 			//	rprintf("\n");
@@ -293,7 +216,6 @@ void fwdSer_L(unsigned char c){
 	static char d_flag;
 	static char vel_rough[4];  //store ascii chars
 	static char dis_rough[8];  //store ascii chars
-
 		//rprintf("%c",c);
 		if(c != 0xff){
 		//if the data isn't whitespace (0xff), post it
@@ -327,10 +249,7 @@ void fwdSer_L(unsigned char c){
 				LEFTVel_current = CM_TICK * retConv_s16(&vel_rough);
 				v_flag = UNSET;
 				v_iter = 0;
-				LEFTVel_ready = SET;
-
-			//	rprintf("LEFTVel_ready: %d\n", LEFTVel_ready);
-			//	rprintf("LLL VVV: ");
+			//	rprintf("RRR VVV: ");
 			//	rprintfu16(RIGHTVel_current);
 			//	rprintf("\n");
 			}
@@ -422,18 +341,6 @@ void ubRcv(unsigned char c){
 		
 }
 
-void LDSRcv(unsigned char c){
-	lds_buffer[lds_buffer_write_ndx] = c;
-	lds_buffer_write_ndx++;
-	if(lds_buffer_write_ndx == buffer_size) lds_buffer_write_ndx = 0;
-}
-
-uint8_t read_LDS(){
-	lds_buffer_read_ndx++;
-	if(lds_buffer_read_ndx == buffer_size) lds_buffer_read_ndx = 0;
-	return lds_buffer[lds_buffer_read_ndx - 1];
-}
-
 void prvSetupHardware(){
 
 	int i, j;
@@ -453,7 +360,7 @@ void prvSetupHardware(){
     uartSetBaudRate(0, 38400); // set UARTE speed, for Bluetooth
     uartSetBaudRate(1, 115200); // set UARTD speed, for USB connection, up to 500k, try 115200 if it doesn't work
     uartSetBaudRate(2, 38400); // set UARTH speed
-    uartSetBaudRate(3, 115200); // set UARTJ speed, for Blackfin
+    uartSetBaudRate(3, 38400); // set UARTJ speed, for Blackfin
 	//G=Ground, T=Tx (connect to external Rx), R=Rx (connect to external Tx)
 
 	rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
@@ -476,7 +383,7 @@ void prvSetupHardware(){
 	
 	uartSetRxHandler(2, &fwdSer_L);
 	uartSetRxHandler(0, &fwdSer_R);
-	uartSetRxHandler(3, &LDSRcv);
+	//uartSetRxHandler(3, &ubRcv);
 
 	//UART ISR *** UART ISR ***
 
@@ -487,8 +394,7 @@ void prvSetupHardware(){
 	// initialize the timer system
  	init_timer0(TIMER_CLK_1024);
 // 	init_timer1(TIMER_CLK_64); // Timer 1 is initialized by FreeRTOS
- 	//init_timer2(TIMER2_CLK_64);
-	init_timer2(TIMER2_CLK_1024);
+ 	init_timer2(TIMER2_CLK_64);
  	init_timer3(TIMER_CLK_64);
  	init_timer4(TIMER_CLK_64);
  	init_timer5(TIMER_CLK_64);
@@ -527,7 +433,7 @@ void prvSetupHardware(){
 /*************************************************/
 
 
-void wheel_L(float cmd_vel){
+void wheel_L(signed int cmd_vel){
 		if(cmd_vel > 36){cmd_vel = 36;}
 		if(cmd_vel < -36){cmd_vel = -36;}
 		
@@ -540,7 +446,7 @@ void wheel_L(float cmd_vel){
 
 }
 
-void wheel_R(float cmd_vel){
+void wheel_R(signed int cmd_vel){
 		if(cmd_vel > 36){cmd_vel = 36;}
 		if(cmd_vel < -36){cmd_vel = -36;}
 				
@@ -553,95 +459,67 @@ void wheel_R(float cmd_vel){
 
 }
 
-
-void vPID(void* pvParameters){
+void vPID_L(void* pvParameters){
 	
 	portTickType xLastWakeTime;
 	
-	float error_L;
-	float acc_error_L = 0;
-	float error_R;
-	float acc_error_R = 0;
-
-	const float KP_L = 2*3*(0.9/(796.1475*0.1206));
-	const float TI_L = (0.1206/0.3);
-	const float KI_L = KP_L/TI_L;
-
-	const float KP_R = 2*2.5*(0.9/(676.1129*0.1597));
-	const float TI_R = (0.1597/0.3);
-	const float KI_R = KP_R/TI_R;
+	s16 error;
+	s16 acc_error = 0;
+	float KP = 0.25;
+	float KI = 0.125;
 	
-	float v_out_L = 0;		//velocity output to left wheel
-	float v_out_R = 0;		//velocity output to right wheel
 
-	float v_left = 0;	//velocity command to left wheel
-	float v_right = 0;	//velocity command to right wheel
-
-	float dt = 0;
-	
 	wheel_L_on();
-	wheel_R_on();
-
-	reset_timer2();
 
 	for(;;){
-	
-	// Forward Kinematics
-	// Velocity Adjustment
-	/*
-		if((1 - (pow(cmd_ang_vel,2))/(pow(cmd_ang_vel,2) + 0.0625)) < 1){
-			v_left = (signed int)(v_command*(1 - (pow(cmd_ang_vel,2))/(pow(cmd_ang_vel,2) + 0.0625)) - cmd_ang_vel*ROBOT_RADIUS);
-			v_right = (signed int)(v_command*(1 - (pow(cmd_ang_vel,2))/(pow(cmd_ang_vel,2) + 0.0625)) + cmd_ang_vel*ROBOT_RADIUS);
-		}
-		else{
-			v_left = (signed int)(v_command - cmd_ang_vel*ROBOT_RADIUS);
-			v_right = (signed int)(v_command + cmd_ang_vel*ROBOT_RADIUS);
-		}
-	*/
-	
-		v_left = (v_command - cmd_ang_vel*ROBOT_RADIUS);
-		v_right = (v_command + cmd_ang_vel*ROBOT_RADIUS);
-
-		dt = ((get_timer2_overflow()*255 + TCNT2) * 0.0633) / 1000;
-		reset_timer2();
-	
-	// PID
-
-		LEFTVel_ready = RIGHTVel_ready = UNSET;
-
-		error_L = v_left - LEFTVel_current;
-		error_R = v_right - (-RIGHTVel_current);
+			signed int v_out = v_command + v_offset;
+			error = v_out - LEFTVel_current;
 			
-		v_out_L = KP_L*error_L + KI_L*acc_error_L + (2/25)*v_left;
-		v_out_R = KP_R*error_R + KI_R*acc_error_R + (2/25)*v_right;
-		
-		acc_error_L += error_L*dt;
-		acc_error_R += error_R*dt;
-/*
+			v_out += (signed int)((KP * error) + (KI * acc_error));
+			acc_error += error;
+
+			if(v_out > 36){v_out = 36;}
+			if(v_out < -36){v_out = -36;}
+			
 			taskENTER_CRITICAL();
-//			rprintf("%d,\t", LEFTVel_current);
-//			rprintfFloat(5,LEFT_Vf);
-			rprintf("LEFTVel: %d\tv_out_L: %d\t", LEFTVel_current, (int)v_out_L);
-			rprintf("RIGHTVel: %d\tv_out_R: %d\t",-RIGHTVel_current,(int)v_out_R);
-			rprintf("cmd_ang_vel: ");
-			rprintfFloat(5,cmd_ang_vel);
-			rprintf("\tenc_heading: ");
-			rprintfFloat(5,enc_heading);
-			rprintf("\tdt: ");
-			rprintfFloat(8,dt);
-			rprintfCRLF();
+			wheel_L(v_out);
 			taskEXIT_CRITICAL();
-*/
 			
-		taskENTER_CRITICAL();
-		wheel_L(v_out_L);
-		wheel_R(-v_out_R);
-		taskEXIT_CRITICAL();
-
-		vTaskDelayUntil(&xLastWakeTime, (100 / portTICK_RATE_MS));
+		vTaskDelayUntil(&xLastWakeTime, (50 / portTICK_RATE_MS));
 	}
 
 }
+
+void vPID_R(void* pvParameters){
+		
+	portTickType xLastWakeTime;
+	s16 error;
+	s16 acc_error = 0;
+	float KP = 0.25;
+	float KI = 0.125;
+
+	wheel_R_on();
+
+	char adj;
+	for(;;){
+			
+			signed int v_out = v_command - v_offset;
+			error = v_command - (-RIGHTVel_current);
+			v_out += (signed int)((KP * error) + (KI * acc_error));
+			if(v_out > 36){v_out = 36;}
+			if(v_out < -36){v_out = -36;}
+			
+			taskENTER_CRITICAL();
+			wheel_R(-v_out);
+			taskEXIT_CRITICAL();
+
+			acc_error += error;
+			
+		vTaskDelayUntil(&xLastWakeTime, (50 / portTICK_RATE_MS));
+	}
+}
+
+
 
 void vLight0On(void *pvParameters){
 	portTickType xLastWakeTime;
@@ -750,49 +628,43 @@ void send_frame(char flag, int16_t data){
 	uart3SendByte('\n'); //line feed
 }
 
-
-
-void vEnc_UpdatePose(){
+void vRampVel(){
+	const portTickType xTicksToWait = 1000 / portTICK_RATE_MS;
 	portTickType xLastWakeTime;
-	float elapsed_time;
-	reset_timer0();
+	v_command = 0;
+	inst_cmd_vel = 25;
+	vTaskDelayUntil(&xLastWakeTime, 10000 / portTICK_RATE_MS);	//leave velocity at zero briefly
 
 	for(;;){
-		if(LEFTVel_ready || RIGHTVel_ready){
+		
+		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
+		//if(v_command != inst_cmd_vel){v_command++;}
+		v_command += (1/(inst_cmd_vel - v_command))*(inst_cmd_vel);
+
+		if(v_command > 25){v_command = 25;}
+		if(v_command <  0){v_command =  0;}
+		
+	
+	}
+}
+
+void vEnc_UpdatePose(){
+	float enc_ang_vel = 0;
+	float elapsed_time;
+
+	for(;;){
+		
 		//The below formula yields the encoder calculated angular velocity of the robot
 		//as it rotates about some ICC(Instantaneous Center of Curvature)
-		
-		enc_ang_vel = ((-RIGHTVel_current) - LEFTVel_current) / ROBOT_DIAMETER;
-		
-		//elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-		elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.0633) / 1000;
 		reset_timer0();
+		enc_ang_vel = ((-RIGHTVel_current) - LEFTVel_current) / ROBOT_DIAMETER;
+		elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
 		//dRL = dRIGHTDis - dLEFTDis;
 		//dis_enc_heading += sin((dRL)/ ROBOT_DIAMETER);
 		//dRIGHTDis = dLEFTDis = 0;
 		enc_heading += enc_ang_vel * elapsed_time;
-		// Limit the heading to 2pi
-		enc_heading -= 2*M_PI*(1 + floor((enc_heading-M_PI)/(2*M_PI)));
-		//cmd_ang_vel = 3*pow(cmd_angle - enc_heading,2)/(pow(cmd_angle - enc_heading,2) + pow(3,2));
-		cmd_ang_vel = -0.5*atan2(1*(enc_heading - cmd_angle) +0,1);
-		/*
-		rprintf("cmd_ang_vel: ");
-		rprintfFloat(5,cmd_ang_vel);
-		rprintfCRLF();
-		rprintf("enc_heading: ");
-		rprintfFloat(5,enc_heading);
-		rprintfCRLF();
-		
-		taskENTER_CRITICAL();
-		rprintf("elapsed_time: ");
-		rprintfFloat(10,elapsed_time);
-		rprintfCRLF();
-		taskEXIT_CRITICAL();
-		*/
 
-		}
-		
-	vTaskDelayUntil(&xLastWakeTime, (50 / portTICK_RATE_MS));
+
 	}
 }
 
@@ -803,10 +675,10 @@ void vUpdatePose(){
 	s16 dDis;
 	float CMD_K = 0.5;
 	float COR_K = 1;
-	uint8_t lds_char;
 
 	for(;;){
 		robot.heading = (180 * enc_heading) / M_PI; 
+		v_offset = (0.5 * robot.heading) + CMD_K*cmd_angle + COR_K*correction_angle;
 		robot.vel = (LEFTVel_current + (-RIGHTVel_current)) / 2;
 		
 		dRIGHTDis = (-RIGHTDis_current) - (-RIGHTDis_prev); 
@@ -817,19 +689,9 @@ void vUpdatePose(){
 		dDis = (10*(dRIGHTDis + dLEFTDis))/2;	//Send shifted value to avoid decimals
 		dRIGHTDis = dLEFTDis = 0;
 		
-		//send_frame('H', robot.heading);
-		//send_frame('V', robot.vel);
-		//send_frame('S', dDis);
-
-//		lds_char = read_LDS();
-
-//		if(lds_char == 0xFA) rprintfCRLF();
-		
-//		uart1SendByte(num2char(0x0F & (lds_char >> 4)));
-//		uart1SendByte(num2char(0x0F & lds_char));
-
-
-		//rprintf("r:%d,w:%d\n",lds_buffer_read_ndx,lds_buffer_write_ndx);
+		send_frame('H', robot.heading);
+		send_frame('V', robot.vel);
+		send_frame('S', dDis);
 
 /*
 		rprintf("H: ");
@@ -863,82 +725,36 @@ void vScript(){
 
 	for(;;){
 		cmd_angle = 0;
-		rprintf("cmd_angle: ");
-		rprintfFloat(5, cmd_angle);
-		rprintfCRLF();
+		rprintf("%d\n", cmd_angle);
 		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
-		cmd_angle = 90*(M_PI/180);
-		rprintf("cmd_angle: ");
-		rprintfFloat(5, cmd_angle);
-		rprintfCRLF();
+		cmd_angle = 90;
+		rprintf("%d\n", cmd_angle);
 		vTaskDelayUntil(&xLastWakeTime, xTicksToWait);
 		cmd_angle = 0;
-		//rprintf("%d\n", cmd_angle)
+		rprintf("%d\n", cmd_angle);
 		
 	
 	}
 }
 
-char key;
-float elapsed_time;
-float current_time = 0;
-float previous_time = 0;
+
 
 int main(void)
 {
 	prvSetupHardware();
 
-	key = uart1GetByte();
-	delay_ms(500);
-/*
-	while( key != 's'){
-		key = uart1GetByte();
-	}
-*/	
-/*
-	reset_timer0();
-	wheel_R_on();
-	wheel_R(25);
-	rprintf("Right wheel started.\n");
-	while( key != 'r'){
-		
-		if(RIGHTVel_ready){
-			previous_time = current_time;
-			current_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-			//rprintfCRLF();
-			rprintf("%d\n",RIGHTVel_current);
-			RIGHTVel_ready = UNSET;
-		}
-		key = uart1GetByte();
-	}
-	wheel_R_off();
-
-	elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-	rprintf("Elapsed Time: ");
-	rprintfFloat(10,elapsed_time);
-	rprintfCRLF();
-	rprintf("dt: ");
-	rprintfFloat(10,current_time - previous_time);
-	rprintfCRLF();
-
-*/	
-
-//	for(;;);
-
-	v_command = 25;
-	cmd_ang_vel = 0;
-
+	
 
 	xTaskCreate(vLight0On, "Light0", 100, NULL, 1, NULL);
 	xTaskCreate(vLight1On, "Light1", 100, NULL, 1, NULL);
+	xTaskCreate(vRampVel, "RampVel", 100, NULL, 1, NULL);
 	xTaskCreate(vUpdatePose, "UpdatePs", 500, NULL, 1, NULL);
 	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
 //	xTaskCreate(vServoOsc, "ServoGo", 200, NULL, 1, NULL);
 //	xTaskCreate(vServoTm, "ServoTm", 200, NULL, 1, NULL);
-//	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
-//	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
-	xTaskCreate(vPID, "vPID", 500, NULL, 1, NULL);
-//	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
+	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
+	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
+	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
 
 
 	vTaskStartScheduler();
