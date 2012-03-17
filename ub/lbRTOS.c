@@ -6,7 +6,7 @@
 //#define FALSE	0x00;
 
 
-#define BUFFER_SIZE		1024
+#define BUFFER_SIZE		256
 uint8_t lds_buffer[BUFFER_SIZE];
 uint8_t *lds_buffer_write_ndx = NULL;
 uint8_t *lds_buffer_read_ndx = NULL;
@@ -235,12 +235,11 @@ uint8_t parse_frame(LDS_FRAME *frame){
     //   15  14  13  12  11  10  9   8   7   6    5    4    3    2    1    0
     //   512 256 128 64  32  16  8   4   2   1 .  1/2  1/4  1/8  1/16 1/32 1/64
     //
-	//frame.motor_speed = (((uint16_t)read_LDS())<<8) + (uint16_t)read_LDS();
+	
 	frame->motor_speed = ((uint16_t)read_LDS()) + ((uint16_t)read_LDS()<<8);
     // Add these bytes for the error checker
     chk_data[1] = frame->motor_speed;
-	//rprintfu16(frame.motor_speed);
-	//rprintfCRLF();
+	
 				
     // Read distances, intensities, and flags
     for(uint8_t itr = 0; itr < 4; itr++) {
@@ -271,7 +270,6 @@ uint8_t parse_frame(LDS_FRAME *frame){
 
     // Read checksum
     // Checksum is given in little endian, but because it is read into a uint16_t, it is ordered correctly
-	//frame->checksum = (((uint16_t)read_LDS())<<8) + (uint16_t)read_LDS();
 	frame->checksum = (((uint16_t)read_LDS())) + (((uint16_t)read_LDS())<<8);
     
     return error_checker(chk_data, frame->checksum);
@@ -330,7 +328,7 @@ void prvSetupHardware(){
 
 	// initialize the timer system
  	init_timer0(TIMER_CLK_1024);
-// 	init_timer1(TIMER_CLK_64); // Timer 1 is initialized by FreeRTOS
+ 	init_timer1(TIMER_CLK_64); // Timer 1 is initialized by FreeRTOS
  	//init_timer2(TIMER2_CLK_64);
 	init_timer2(TIMER2_CLK_1024);
  	init_timer3(TIMER_CLK_64);
@@ -416,39 +414,72 @@ void print_frame(LDS_FRAME frame){
 	rprintfu16(frame.motor_speed);
 	rprintf(" Distances: ");
 	for(uint8_t ndx = 0; ndx < 4; ndx++){
-		rprintfu16(frame.distance[ndx]);
-		rprintf(" ");
+		rprintf("%d ",frame.distance[ndx]);
 	}
 	rprintfCRLF();
 }
 
-LDS_FRAME ldsf[20];
+void grab_frames(const LDS_FRAME *frame, LDS_FRAME ldsf[]){
+	LDS_FRAME t_frame;
+	uint8_t f_ndx = 1;
+	ldsf[0] = *frame;
+
+	while(f_ndx < 90){
+		if(parse_frame(&t_frame)){
+			ldsf[f_ndx] = t_frame;
+			f_ndx++;
+		}
+	}
+}
+
+void conv_FrametoDist(const LDS_FRAME ldsf[], uint16_t ranges[]){
+	// ldsf must be of length 90
+	// ranges must be of length 360
+	for(uint16_t f_ndx = 0; f_ndx < 90; f_ndx++){
+		ranges[4*f_ndx]     = (ldsf[f_ndx].distance[0]);
+		ranges[4*f_ndx + 1] = (ldsf[f_ndx].distance[1]);
+		ranges[4*f_ndx + 2] = (ldsf[f_ndx].distance[2]);
+		ranges[4*f_ndx + 3] = (ldsf[f_ndx].distance[3]);
+	}
+}
+
+
 
 int main(void)
 {
+	LDS_FRAME frame;
+	LDS_FRAME ldsf[90];
+	uint16_t ranges[360];
+
 	lds_buffer_write_ndx = lds_buffer_read_ndx = lds_buffer;
 	prvSetupHardware();
-
 	rprintf("Starting program.\n");
-	//delay_ms(2000);
-	
-	LDS_FRAME frame;
-	//for(uint8_t f_iter = 0; f_iter < 200; f_iter++){
-	//while(1){
-	uint8_t f_iter = 0;
-	while(f_iter != 20){
-		if(parse_frame(&frame)){
-			//print_frame(frame);
-			ldsf[f_iter] = frame;
-			f_iter++;
-		}
-	}
-	for(uint8_t f_iter = 0; f_iter < 20; f_iter++){
-		print_frame(ldsf[f_iter]);
-	}
-	rprintf("Program terminated.");
+
 	while(1){
-		delay_ms(1);
+	// Grab frames
+		if(parse_frame(&frame)){
+			//rprintf("Got frame.\n");
+			// If you get the first frame, start reading into the frame buffer
+			if(frame.index == 0xA0){
+				grab_frames(&frame,ldsf);
+				rprintf("Frames grabbed.\n");
+				// Convert frames into distances
+				conv_FrametoDist(ldsf,ranges);
+				rprintf("Frames Converted.\n");
+				// Print ranges
+				rprintf("Scan start\n");
+				for(uint16_t r_ndx = 0; r_ndx < 360; r_ndx++){
+					rprintf("%d",ranges[r_ndx]);
+					rprintfCRLF();
+				}
+				rprintf("\nScan end\n\n");
+			}
+		}
+
+
 	}
+
+	rprintf("Program terminated.");
+	
 	return 0;
 }
