@@ -12,6 +12,9 @@
 *
 ****************************************************************************/
 
+#ifndef SOR_UTILS_H
+#define SOR_UTILS_H
+
 //AVR includes
 #include <avr/io.h>		    // include I/O definitions (port names, pin names, etc)
 #include <avr/interrupt.h>	// include interrupt support
@@ -221,3 +224,5 @@ printf("variable address = %d, variable = %d", p_variable, *p_variable);
 ----
 char *p_variable stores variable of char type, int *p_variable stores variable of int type
 */
+
+#endif

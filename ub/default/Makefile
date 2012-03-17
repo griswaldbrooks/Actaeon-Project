@@ -43,7 +43,7 @@ INCLUDES = -I"C:\Robot\Actaeon-Project\ub\Source\portable\GCC\ATMega323" -I"C:\R
 LIBS = -lm -lc 
 
 ## Objects that must be built in order to link
-OBJECTS = lbRTOS.o list.o queue.o tasks.o port.o croutine.o heap_1.o timer640.o uart4.o buffer.o a2d.o rprintf.o i2c.o 
+OBJECTS = lbRTOS.o list.o queue.o tasks.o port.o croutine.o heap_1.o timer640.o uart4.o buffer.o a2d.o rprintf.o i2c.o lds.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -87,6 +87,9 @@ rprintf.o: ../SoR/rprintf.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 i2c.o: ../SoR/i2c.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+lds.o: ../lds.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link

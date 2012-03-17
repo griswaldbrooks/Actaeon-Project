@@ -32,7 +32,10 @@ lbRTOS.o: ../lbRTOS.c C:\Robot\Actaeon-Project\ub\SoR/SoR_Utils.h \
   C:\Robot\Actaeon-Project\ub\SoR/a2d.h \
   C:\Robot\Actaeon-Project\ub\SoR/i2c.h \
   C:\Robot\Actaeon-Project\ub\SoR/i2cconf.h \
-  C:\Robot\Actaeon-Project\ub\SoR/spi.h
+  C:\Robot\Actaeon-Project\ub\SoR/spi.h \
+  C:\Robot\Actaeon-Project\ub\./lds.h \
+  C:\Robot\Actaeon-Project\ub\SoR/timer640.h \
+  C:\Robot\Actaeon-Project\ub\SoR/rprintf.h
 
 C:\Robot\Actaeon-Project\ub\SoR/SoR_Utils.h:
 
@@ -103,3 +106,9 @@ C:\Robot\Actaeon-Project\ub\SoR/i2c.h:
 C:\Robot\Actaeon-Project\ub\SoR/i2cconf.h:
 
 C:\Robot\Actaeon-Project\ub\SoR/spi.h:
+
+C:\Robot\Actaeon-Project\ub\./lds.h:
+
+C:\Robot\Actaeon-Project\ub\SoR/timer640.h:
+
+C:\Robot\Actaeon-Project\ub\SoR/rprintf.h:
