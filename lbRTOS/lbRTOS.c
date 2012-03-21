@@ -52,19 +52,20 @@ float cmd_angle = 0; 	//angle in radians
 float cmd_ang_vel = 0; //commanded angular velocity in radians/sec
 s32 cmd_dist = 0;	//commanded distance in cm
 
-#define buffer_size		1024
-uint8_t lds_buffer[buffer_size];
-uint16_t lds_buffer_write_ndx = 0;
-uint16_t lds_buffer_read_ndx = 0;
+union u_vel{
+	float f_vel;
+	uint8_t arr_vel[4];
+};
 
-typedef struct {
-	uint8_t index;
-	uint16_t motor_speed;
-	uint32_t distances[4];
-	uint32_t intensities[4];
+union u_ome{
+	float f_ome;
+	uint8_t arr_ome[4];
+};
 
-} LDS_FRAME;
-
+#define UB_BUFFER_SIZE	512
+uint8_t ub_buffer[UB_BUFFER_SIZE];
+uint8_t *ub_buffer_write_ndx = NULL;
+uint8_t *ub_buffer_read_ndx = NULL;
 
 typedef struct {
 	float heading;
@@ -149,70 +150,7 @@ s32 retConv_s32(char* ch_head){
 	int_val = ((int_val<<4) | iv8);
 	return int_val;
 }
-/*
-uint8_t parse_frame(){
-    // Array for use by the error checker
-    uint16_t[10] chk_data;
 
-    // Read start byte
-    uint8_t start_byte;
-    boost::asio::read(serial, boost::asio::buffer(&start_byte, 1));
-    // If the byte read in is not the start byte (0xFA), then this is not the beginning of a frame
-    if(start_byte != 0xFA) return false; 
-
-    // Read index
-    boost::asio::read(serial, boost::asio::buffer(&index,1));	
-    // If the byte proceeding the start byte does not look like an index, then is is not the beginning of a frame
-    if((index < 0xA0)||(index > 0xF9)) return false;
-
-    // Add these bytes for the error checker
-    chk_data[0] = (index << 8) + start_byte;
-
-    // Read motor speed
-    //   Motor speed is given as little endian from the LDS, but by reading the motor speed into a uint16_t rather
-    //   than a uint8_t array, the bits are ordered correctly. The resultant uint16_t (motor_speed) is a fixed point number,
-    //   structured as follows:
-    //   MSB                                                               LSB
-    //   15  14  13  12  11  10  9   8   7   6    5    4    3    2    1    0
-    //   512 256 128 64  32  16  8   4   2   1 .  1/2  1/4  1/8  1/16 1/32 1/64
-    //
-    boost::asio::read(serial, boost::asio::buffer(&motor_speed,2));
-    // Add these bytes for the error checker
-    chk_data[1] = motor_speed;
-				
-    // Read distances, intensities, and flags
-    for(uint8_t itr = 0; itr < 4; itr++) {
-      // Read in the four distance and intensity bytes
-      boost::array<uint8_t, 4> di_bytes;
-      boost::asio::read(serial, boost::asio::buffer(&di_bytes, 4));
-      
-      // The invalid and strength flags are the MSB and adjacent bit of the second (indexwise) distance byte
-      invalid[itr] = (bool)(di_bytes[1] & 0x80);
-      strength_warning[itr] = (bool)(di_bytes[1] & 0x40);
-
-      // Distance and intensity bytes are read in little endian, and therefore need to be switched and concatenated
-      // The second distance byte (indexwise) is masked to eliminate the invalid and strength flags from the measurement
-      if(invalid[itr]){ // If this measurement is invalid, set it to zero
-	distance[itr]  = 0;
-      }
-      else{
-	distance[itr]  = ((di_bytes[1] & 0x3F) << 8) + di_bytes[0];
-      }
-
-      intensity[itr] = (di_bytes[3] << 8) + di_bytes[2];
-      
-      // Add these bytes for the error checker
-      chk_data[2*itr + 2] = (di_bytes[1] << 8) + di_bytes[0];
-      chk_data[2*itr + 3] = (di_bytes[3] << 8) + di_bytes[2];
-    }
-
-    // Read checksum
-    // Checksum is given in little endian, but because it is read into a uint16_t, it is ordered correctly
-    boost::asio::read(serial, boost::asio::buffer(&checksum, 2));
-    
-    return error_checker(chk_data, checksum);
-}  
-*/
 
 void fwdSer_R(unsigned char c){
 //posts velocity and distance data to global variable
@@ -356,82 +294,27 @@ void fwdSer_L(unsigned char c){
 }
 
 void ubRcv(unsigned char c){
-	//posts commanded rotation and distance data to global variable
-	static char lf_flag; //checks if line feed ("\n") character has been sent
-	static char rot_iter; //count iterator for commanded rotation
-	static char dis_iter; //count iterator for commanded distance
-	static char rot_flag;
-	static char dis_flag;
-	static s16 rot_rough = 0;  //store ascii chars
-	static s16 dis_rough = 0;  //store ascii chars
-		c = c & 0b01111111;		//for some reason, every byte has its first bit set to 1
-		uart1SendByte(c);
-		if(c != 0xff){
-		//if the data isn't whitespace (0xff), post it
-		
-
-			if(c == 0x0a){lf_flag = SET;} //line feed detected, the character will be a 'R' or a 'D'
-	
-			else if((lf_flag) && (c == 'R')){ //set rotation flag
-				rot_flag = SET;
-				rot_iter = 0;
-				lf_flag = UNSET;
-				//rprintf("R: char: %c ",c);
-				return;
-			} 
-			else if((lf_flag) && (c == 'M')){ //set distance flag
-				dis_flag = SET;
-				dis_iter = 0;
-				lf_flag = UNSET;
-			//	rprintf("%c",c);
-				return;
-			}
-			else if(rot_flag){
-				rot_rough = (char2hex(c) | (rot_rough << 4));	//store then increment	
-				rot_iter++;
-				//rprintf(" #%c\t:%d\t",c,rot_iter);
-				//rprintfu08(c); rprintf("\t");
-				//rprintfu16(rot_rough);
-				//rprintfCRLF();
-			}	
-			else if(dis_flag){
-				dis_rough = (char2hex(c) | (dis_rough << 4));	//store then increment	
-				dis_iter++;
-			//	rprintf("%c",c);
-			}
-
-			if(rot_iter == 4){
-				//cmd_angle = retConv_s16(&rot_rough);
-				cmd_angle = rot_rough;
-				rot_flag = UNSET;
-				rot_iter = 0;
-				//rprintfu16(rot_rough);
-				//rprintf("\n\n");
-				rot_rough = 0;
-			}
-			else if(dis_iter == 4){
-				cmd_dist = dis_rough;
-				dis_flag = UNSET;
-				dis_iter = 0;
-				dis_rough = 0;
-			}
-		
+	if(c != 0xff){
+		*ub_buffer_write_ndx = c;
+		ub_buffer_write_ndx++;		
+		if(ub_buffer_write_ndx >= (ub_buffer + UB_BUFFER_SIZE)){ 
+			ub_buffer_write_ndx = ub_buffer;
 		}
-
-		else{rprintf("WR\n");}
-		
+	}	
 }
 
-void LDSRcv(unsigned char c){
-	lds_buffer[lds_buffer_write_ndx] = c;
-	lds_buffer_write_ndx++;
-	if(lds_buffer_write_ndx == buffer_size) lds_buffer_write_ndx = 0;
+uint8_t read_ub(){
+	while(ub_buffer_read_ndx == ub_buffer_write_ndx){ delay_us(10); };
+	uint8_t data = *ub_buffer_read_ndx;
+	ub_buffer_read_ndx++;
+	if(ub_buffer_read_ndx >= (ub_buffer + UB_BUFFER_SIZE)){ 
+		ub_buffer_read_ndx = ub_buffer;
+	}
+	return data;
 }
 
-uint8_t read_LDS(){
-	lds_buffer_read_ndx++;
-	if(lds_buffer_read_ndx == buffer_size) lds_buffer_read_ndx = 0;
-	return lds_buffer[lds_buffer_read_ndx - 1];
+void init_ub_buffer(){
+	ub_buffer_write_ndx = ub_buffer_read_ndx = ub_buffer;
 }
 
 void prvSetupHardware(){
@@ -473,10 +356,12 @@ void prvSetupHardware(){
 
 	
 	//UART ISR *** UART ISR ***
+
+	init_ub_buffer();
 	
 	uartSetRxHandler(2, &fwdSer_L);
 	uartSetRxHandler(0, &fwdSer_R);
-	uartSetRxHandler(3, &LDSRcv);
+	uartSetRxHandler(3, &ubRcv);
 
 	//UART ISR *** UART ISR ***
 
@@ -638,7 +523,7 @@ void vPID(void* pvParameters){
 		wheel_R(-v_out_R);
 		taskEXIT_CRITICAL();
 
-		vTaskDelayUntil(&xLastWakeTime, (100 / portTICK_RATE_MS));
+		vTaskDelayUntil(&xLastWakeTime, (1 / portTICK_RATE_MS));
 	}
 
 }
@@ -879,6 +764,66 @@ void vScript(){
 	}
 }
 
+void vUbRcv(){
+	portTickType xLastWakeTime;
+	union u_vel fltuint8_velocity;
+	union u_ome fltuint8_omega;
+	uint8_t rcv_byte;
+	uint8_t rcv_chk;
+	uint8_t calc_chk;
+	for(;;){
+		rcv_byte = read_ub();
+		//rprintfu08(rcv_byte);
+		if(rcv_byte == 0xFA){
+		
+			fltuint8_velocity.arr_vel[0] = read_ub();
+			fltuint8_velocity.arr_vel[1] = read_ub();
+			fltuint8_velocity.arr_vel[2] = read_ub();
+			fltuint8_velocity.arr_vel[3] = read_ub();
+			
+
+			fltuint8_omega.arr_ome[0] = read_ub();
+			fltuint8_omega.arr_ome[1] = read_ub();
+			fltuint8_omega.arr_ome[2] = read_ub();
+			fltuint8_omega.arr_ome[3] = read_ub();
+		
+
+			rcv_chk = read_ub();
+		
+
+			calc_chk = fltuint8_velocity.arr_vel[0] + fltuint8_velocity.arr_vel[1] + fltuint8_velocity.arr_vel[2]
+			+ fltuint8_velocity.arr_vel[3] + fltuint8_omega.arr_ome[0] + fltuint8_omega.arr_ome[1] 
+			+ fltuint8_omega.arr_ome[2] + fltuint8_omega.arr_ome[3];
+/**/
+			rprintfu08(fltuint8_velocity.arr_vel[0]);
+			rprintfu08(fltuint8_velocity.arr_vel[1]);
+			rprintfu08(fltuint8_velocity.arr_vel[2]);
+			rprintfu08(fltuint8_velocity.arr_vel[3]);
+
+			rprintfu08(fltuint8_omega.arr_ome[0]);
+			rprintfu08(fltuint8_omega.arr_ome[1]);
+			rprintfu08(fltuint8_omega.arr_ome[2]);
+			rprintfu08(fltuint8_omega.arr_ome[3]);
+
+			if(calc_chk == rcv_chk){
+			}
+				v_command = fltuint8_velocity.f_vel;
+				cmd_ang_vel = fltuint8_omega.f_ome;
+				
+				
+				rprintfCRLF();
+				rprintf("Received Velocity: ");
+				rprintfFloat(5,fltuint8_velocity.f_vel);
+				rprintf(" Omega: ");
+				rprintfFloat(5,fltuint8_omega.f_ome);
+				rprintfCRLF();
+			
+			
+		}
+		vTaskDelayUntil(&xLastWakeTime, (1 / portTICK_RATE_MS));
+	}
+}
+
 char key;
 float elapsed_time;
 float current_time = 0;
@@ -888,44 +833,12 @@ int main(void)
 {
 	prvSetupHardware();
 
-	key = uart1GetByte();
-	delay_ms(500);
-/*
-	while( key != 's'){
-		key = uart1GetByte();
-	}
-*/	
-/*
-	reset_timer0();
-	wheel_R_on();
-	wheel_R(25);
-	rprintf("Right wheel started.\n");
-	while( key != 'r'){
-		
-		if(RIGHTVel_ready){
-			previous_time = current_time;
-			current_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-			//rprintfCRLF();
-			rprintf("%d\n",RIGHTVel_current);
-			RIGHTVel_ready = UNSET;
-		}
-		key = uart1GetByte();
-	}
-	wheel_R_off();
+	
+	//delay_ms(500);
 
-	elapsed_time = ((get_timer0_overflow()*255 + TCNT0) * 0.256) / 1000;
-	rprintf("Elapsed Time: ");
-	rprintfFloat(10,elapsed_time);
-	rprintfCRLF();
-	rprintf("dt: ");
-	rprintfFloat(10,current_time - previous_time);
-	rprintfCRLF();
-
-*/	
-
-//	for(;;);
 
 	v_command = 25;
+	v_command = 0;
 	cmd_ang_vel = 0;
 
 
@@ -935,8 +848,7 @@ int main(void)
 	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
 //	xTaskCreate(vServoOsc, "ServoGo", 200, NULL, 1, NULL);
 //	xTaskCreate(vServoTm, "ServoTm", 200, NULL, 1, NULL);
-//	xTaskCreate(vPID_L, "vPID_L", 500, NULL, 2, NULL);
-//	xTaskCreate(vPID_R, "vPID_R", 500, NULL, 2, NULL);
+	xTaskCreate(vUbRcv, "vUbRcv", 500, NULL, 1, NULL);
 	xTaskCreate(vPID, "vPID", 500, NULL, 1, NULL);
 //	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
 

@@ -1,5 +1,9 @@
+
 #include <SoR_Utils.h>
 #include <lds.h>
+#include <obstacle_avoidance.h>
+
+
 
 #define SET		0x01;
 #define UNSET	0x00;
@@ -49,13 +53,14 @@ void prvSetupHardware(){
 	
 
 	uartInit();  // initialize the UART (serial port)
-    uartSetBaudRate(0, 38400); // set UARTE speed, for Bluetooth
+    uartSetBaudRate(0, 115200); // set UARTE speed, for Bluetooth
     uartSetBaudRate(1, 115200); // set UARTD speed, for USB connection, up to 500k, try 115200 if it doesn't work
-    uartSetBaudRate(2, 38400); // set UARTH speed
+    uartSetBaudRate(2, 115200); // set UARTH speed
     uartSetBaudRate(3, 115200); // set UARTJ speed, for Blackfin
 	//G=Ground, T=Tx (connect to external Rx), R=Rx (connect to external Tx)
 
-	rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
+	rprintfInit(uart2SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
+	//rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
 
 	configure_ports(); // configure which ports are analog, digital, etc.
 	
@@ -133,6 +138,7 @@ void send_frame(float velocity, float omega){
 		
 	// Send header
 	uart0SendByte(0xFA);
+	//rprintfu08(0xFA);
 
 	// Send linear velocity
 	uart0SendByte(fltuint8_velocity.arr_vel[0]);
@@ -140,20 +146,86 @@ void send_frame(float velocity, float omega){
 	uart0SendByte(fltuint8_velocity.arr_vel[2]);
 	uart0SendByte(fltuint8_velocity.arr_vel[3]);
 
+	//rprintfu08(fltuint8_velocity.arr_vel[0]);
+	//rprintfu08(fltuint8_velocity.arr_vel[1]);
+	//rprintfu08(fltuint8_velocity.arr_vel[2]);
+	//rprintfu08(fltuint8_velocity.arr_vel[3]);
+
 	// Send angular velocity
 	uart0SendByte(fltuint8_omega.arr_ome[0]);
 	uart0SendByte(fltuint8_omega.arr_ome[1]);
 	uart0SendByte(fltuint8_omega.arr_ome[2]);
 	uart0SendByte(fltuint8_omega.arr_ome[3]);
-
+/*
+	rprintfu08(fltuint8_omega.arr_ome[0]);
+	rprintfu08(fltuint8_omega.arr_ome[1]);
+	rprintfu08(fltuint8_omega.arr_ome[2]);
+	rprintfu08(fltuint8_omega.arr_ome[3]);
+*/
 	// Send checksum
 	uint8_t chk = fltuint8_velocity.arr_vel[0] + fltuint8_velocity.arr_vel[1] + fltuint8_velocity.arr_vel[2]
 	+ fltuint8_velocity.arr_vel[3] + fltuint8_omega.arr_ome[0] + fltuint8_omega.arr_ome[1] 
 	+ fltuint8_omega.arr_ome[2] + fltuint8_omega.arr_ome[3];
 
 	uart0SendByte(chk);
+	//rprintfu08(chk);
 }
 
+void right_wall(uint16_t range[]){
+	float lin_v = 0;
+	float ang_v = 0;
+	uint8_t f_cntr = 0;
+	uint8_t r_cntr = 0;
+	float f_rng_avg = 0;
+	float r_rng_avg = 0;
+	const MIN_RANGE = 150; // mm
+	// Calculate the average of the front 5 valid beams
+	for(uint8_t r_ndx = 0; r_ndx < 5; r_ndx++){
+		uint8_t f_ndx = 358 + r_ndx;
+		// Accomodate wrap around
+		if(f_ndx > 359){
+			f_ndx -= 360;
+		}
+		if(range[f_ndx] > MIN_RANGE){
+			f_rng_avg += (float)range[f_ndx];
+			f_cntr++;
+		}
+	}
+	if(f_cntr != 0){
+		f_rng_avg = f_rng_avg/(float)f_cntr;
+	}
+//	rprintf("Front Range: ");
+//	rprintfFloat(5, f_rng_avg);
+//	rprintfCRLF();
+	// Produce a linear velocity using sigmoid
+	lin_v = 30*pow(2.0,(f_rng_avg/100)-5)/(pow(2.0,(f_rng_avg/100)-5) + 4.0);
+
+	// Calculate the average of the 5 right beams about -45 degrees
+	for(uint16_t r_ndx = 312; r_ndx < 317; r_ndx++){
+		
+		if(range[r_ndx] > MIN_RANGE){
+			r_rng_avg += (float)range[r_ndx];
+			r_cntr++;
+		}
+	}
+	if(r_cntr != 0){
+		r_rng_avg = r_rng_avg/(float)r_cntr;
+	}
+//	rprintf("Right Range: ");
+//	rprintfFloat(5, r_rng_avg);
+//	rprintfCRLF();
+
+	ang_v = -0.3*(r_rng_avg-230)/sqrt(1 + square(r_rng_avg-230));
+
+	send_frame((float)lin_v,(float)ang_v);
+	rprintf("400, ");
+	rprintfFloat(5,ang_v);
+	rprintfCRLF();
+	rprintf("500, ");
+	rprintfFloat(5,lin_v);
+	rprintfCRLF();
+
+}
 
 int main(void)
 {
@@ -162,21 +234,49 @@ int main(void)
 	init_LDS_buffer();
 	prvSetupHardware();
 	rprintf("Starting program.\n");
-
+	
+	double fow, right;
 	while(1){
 		// Print ranges
 		//rprintf("Scan start\n");
 		get_range_scan(ranges);
-		/*
+		/* Print ranges */
 		for(uint16_t r_ndx = 0; r_ndx < 360; r_ndx++){
-			rprintf("%d",ranges[r_ndx]);
+			rprintf("%d,%d",r_ndx,ranges[r_ndx]);
+			//uart2SendByte(ranges[r_ndx]);
 			rprintfCRLF();
+			//uart2SendByte('\n');
 		}
-		rprintf("\nScan end\n\n");
+		//rprintf("\nScan end\n\n");
+		
+		right_wall(ranges);
+		
+		//BRIAN==========================================================		
+		//. Uptake [distance, velocity][n = 1:360]
+		/*
+		for( int i=0; i<360; i++ ) {
+			addFrame(_FRMIDX2THETA(i),ranges[i]);
+			send_frame( (float)_GETVELOC, (float)_GETOMEGA );
+				
+			solutionUpdater();
+		}
+		*/
+		/*
+		fow		=0;
+		right	=0;
+		for( int i = 0; i < 8; i++ ) {
+			fow   += ranges[i]  + ranges[360-i];
+			right += ranges[90+2*i] + ranges[90-2*i];
+		}
+		fow = (fow - 15000)/400;
+		right = 30*((right - 8000)/8000+1);
+		send_frame( fow, right );
+
+		rprintfFloat( 6, fow   ); rprintfChar( '\t' );
+		rprintfFloat( 6, right  ); rprintfChar( '\n' );
+		//===============================================================		
 		*/
 		
-		delay_ms(1000);
-
 	}
 
 	rprintf("Program terminated.");

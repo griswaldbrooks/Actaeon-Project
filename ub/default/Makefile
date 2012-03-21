@@ -37,13 +37,13 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Include Directories
-INCLUDES = -I"C:\Robot\Actaeon-Project\ub\Source\portable\GCC\ATMega323" -I"C:\Robot\Actaeon-Project\ub\Source\include" -I"C:\Robot\Actaeon-Project\ub\." -I"C:\Robot\Actaeon-Project\ub\SoR" 
+INCLUDES = -I"C:\Robot\Actaeon-Project\ub\." -I"C:\Robot\Actaeon-Project\ub\SoR" 
 
 ## Libraries
 LIBS = -lm -lc 
 
 ## Objects that must be built in order to link
-OBJECTS = lbRTOS.o list.o queue.o tasks.o port.o croutine.o heap_1.o timer640.o uart4.o buffer.o a2d.o rprintf.o i2c.o lds.o 
+OBJECTS = lbRTOS.o timer640.o uart4.o a2d.o rprintf.o i2c.o lds.o buffer.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -53,31 +53,10 @@ all: $(TARGET) lbRTOS.hex lbRTOS.eep lbRTOS.lss## Compile
 lbRTOS.o: ../lbRTOS.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
-list.o: ../Source/list.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-queue.o: ../Source/queue.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-tasks.o: ../Source/tasks.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-port.o: ../Source/portable/GCC/ATMega323/port.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-croutine.o: ../Source/croutine.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-heap_1.o: ../Source/portable/MemMang/heap_1.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
 timer640.o: ../SoR/timer640.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 uart4.o: ../SoR/uart4.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
-
-buffer.o: ../SoR/buffer.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 a2d.o: ../SoR/a2d.c
@@ -90,6 +69,9 @@ i2c.o: ../SoR/i2c.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 lds.o: ../lds.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+buffer.o: ../SoR/buffer.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
