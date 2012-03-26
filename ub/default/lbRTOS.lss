@@ -2088,28 +2088,28 @@ void prvSetupHardware(){
 
 	uartInit();  // initialize the UART (serial port)
      c1e:	0e 94 3e 15 	call	0x2a7c	; 0x2a7c <uartInit>
-    uartSetBaudRate(0, 115200); // set UARTE speed, for Bluetooth
+    uartSetBaudRate(0, 34800); // LB
      c22:	80 e0       	ldi	r24, 0x00	; 0
-     c24:	40 e0       	ldi	r20, 0x00	; 0
-     c26:	52 ec       	ldi	r21, 0xC2	; 194
-     c28:	61 e0       	ldi	r22, 0x01	; 1
+     c24:	40 ef       	ldi	r20, 0xF0	; 240
+     c26:	57 e8       	ldi	r21, 0x87	; 135
+     c28:	60 e0       	ldi	r22, 0x00	; 0
      c2a:	70 e0       	ldi	r23, 0x00	; 0
      c2c:	0e 94 18 11 	call	0x2230	; 0x2230 <uartSetBaudRate>
-    uartSetBaudRate(1, 115200); // set UARTD speed, for USB connection, up to 500k, try 115200 if it doesn't work
+    uartSetBaudRate(1, 115200); // USB
      c30:	81 e0       	ldi	r24, 0x01	; 1
      c32:	40 e0       	ldi	r20, 0x00	; 0
      c34:	52 ec       	ldi	r21, 0xC2	; 194
      c36:	61 e0       	ldi	r22, 0x01	; 1
      c38:	70 e0       	ldi	r23, 0x00	; 0
      c3a:	0e 94 18 11 	call	0x2230	; 0x2230 <uartSetBaudRate>
-    uartSetBaudRate(2, 115200); // set UARTH speed
+    uartSetBaudRate(2, 115200); // XBEE
      c3e:	82 e0       	ldi	r24, 0x02	; 2
      c40:	40 e0       	ldi	r20, 0x00	; 0
      c42:	52 ec       	ldi	r21, 0xC2	; 194
      c44:	61 e0       	ldi	r22, 0x01	; 1
      c46:	70 e0       	ldi	r23, 0x00	; 0
      c48:	0e 94 18 11 	call	0x2230	; 0x2230 <uartSetBaudRate>
-    uartSetBaudRate(3, 115200); // set UARTJ speed, for Blackfin
+    uartSetBaudRate(3, 115200); // LDS
      c4c:	83 e0       	ldi	r24, 0x03	; 3
      c4e:	40 e0       	ldi	r20, 0x00	; 0
      c50:	52 ec       	ldi	r21, 0xC2	; 194

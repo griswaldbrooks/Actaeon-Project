@@ -53,10 +53,10 @@ void prvSetupHardware(){
 	
 
 	uartInit();  // initialize the UART (serial port)
-    uartSetBaudRate(0, 115200); // set UARTE speed, for Bluetooth
-    uartSetBaudRate(1, 115200); // set UARTD speed, for USB connection, up to 500k, try 115200 if it doesn't work
-    uartSetBaudRate(2, 115200); // set UARTH speed
-    uartSetBaudRate(3, 115200); // set UARTJ speed, for Blackfin
+    uartSetBaudRate(0, 34800); // LB
+    uartSetBaudRate(1, 115200); // USB
+    uartSetBaudRate(2, 115200); // XBEE
+    uartSetBaudRate(3, 115200); // LDS
 	//G=Ground, T=Tx (connect to external Rx), R=Rx (connect to external Tx)
 
 	rprintfInit(uart2SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf

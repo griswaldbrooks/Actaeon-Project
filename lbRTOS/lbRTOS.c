@@ -333,10 +333,10 @@ void prvSetupHardware(){
 	
 
 	uartInit();  // initialize the UART (serial port)
-    uartSetBaudRate(0, 38400); // set UARTE speed, for Bluetooth
-    uartSetBaudRate(1, 115200); // set UARTD speed, for USB connection, up to 500k, try 115200 if it doesn't work
-    uartSetBaudRate(2, 38400); // set UARTH speed
-    uartSetBaudRate(3, 115200); // set UARTJ speed, for Blackfin
+    uartSetBaudRate(0, 38400); // Right Encoder
+    uartSetBaudRate(1, 115200); // USB connection
+    uartSetBaudRate(2, 38400); // Left Encoder
+    uartSetBaudRate(3, 38400); // UB connection
 	//G=Ground, T=Tx (connect to external Rx), R=Rx (connect to external Tx)
 
 	rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
@@ -521,6 +521,9 @@ void vPID(void* pvParameters){
 		taskENTER_CRITICAL();
 		wheel_L(v_out_L);
 		wheel_R(-v_out_R);
+		PORT_ON(PORTL,1);
+		delay_us(50);
+		PORT_OFF(PORTL,1);
 		taskEXIT_CRITICAL();
 
 		vTaskDelayUntil(&xLastWakeTime, (1 / portTICK_RATE_MS));
@@ -838,7 +841,7 @@ int main(void)
 
 
 	v_command = 25;
-	v_command = 0;
+//	v_command = 0;
 	cmd_ang_vel = 0;
 
 
@@ -848,7 +851,7 @@ int main(void)
 	xTaskCreate(vEnc_UpdatePose, "enUpdtPs", 500, NULL, 1, NULL);
 //	xTaskCreate(vServoOsc, "ServoGo", 200, NULL, 1, NULL);
 //	xTaskCreate(vServoTm, "ServoTm", 200, NULL, 1, NULL);
-	xTaskCreate(vUbRcv, "vUbRcv", 500, NULL, 1, NULL);
+//	xTaskCreate(vUbRcv, "vUbRcv", 500, NULL, 1, NULL);
 	xTaskCreate(vPID, "vPID", 500, NULL, 1, NULL);
 //	xTaskCreate(vScript, "vScript", 100, NULL, 2, NULL);
 
