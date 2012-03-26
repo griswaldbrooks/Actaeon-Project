@@ -23,7 +23,8 @@ picoBoard.o: ../picoBoard.c \
   C:\Robot\Actaeon-Project\PIDCtrlr\./avrlibdefs.h \
   C:\Robot\Actaeon-Project\PIDCtrlr\./avrlibtypes.h \
   c:/winavr-20081205/lib/gcc/../../avr/include/avr/pgmspace.h \
-  c:/winavr-20081205/lib/gcc/../../avr/include/avr/sleep.h
+  c:/winavr-20081205/lib/gcc/../../avr/include/avr/sleep.h \
+  C:\Robot\Actaeon-Project\PIDCtrlr\./pwm_pico.h
 
 c:/winavr-20081205/lib/gcc/../../avr/include/avr/io.h:
 
@@ -74,3 +75,5 @@ C:\Robot\Actaeon-Project\PIDCtrlr\./avrlibtypes.h:
 c:/winavr-20081205/lib/gcc/../../avr/include/avr/pgmspace.h:
 
 c:/winavr-20081205/lib/gcc/../../avr/include/avr/sleep.h:
+
+C:\Robot\Actaeon-Project\PIDCtrlr\./pwm_pico.h:

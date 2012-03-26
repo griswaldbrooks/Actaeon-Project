@@ -3,25 +3,25 @@ picoBoard.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         0000036a  00000000  00000000  00000074  2**1
+  0 .text         000003f8  00000000  00000000  00000074  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .bss          00000008  00800100  00800100  000003de  2**0
+  1 .bss          00000008  00800100  00800100  0000046c  2**0
                   ALLOC
-  2 .debug_aranges 00000060  00000000  00000000  000003de  2**0
+  2 .debug_aranges 00000060  00000000  00000000  0000046c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  3 .debug_pubnames 00000244  00000000  00000000  0000043e  2**0
+  3 .debug_pubnames 00000277  00000000  00000000  000004cc  2**0
                   CONTENTS, READONLY, DEBUGGING
-  4 .debug_info   000004b8  00000000  00000000  00000682  2**0
+  4 .debug_info   000004f4  00000000  00000000  00000743  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_abbrev 000001ea  00000000  00000000  00000b3a  2**0
+  5 .debug_abbrev 000001ea  00000000  00000000  00000c37  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_line   00000556  00000000  00000000  00000d24  2**0
+  6 .debug_line   00000631  00000000  00000000  00000e21  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_frame  000001a0  00000000  00000000  0000127c  2**2
+  7 .debug_frame  000001d0  00000000  00000000  00001454  2**2
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_str    00000297  00000000  00000000  0000141c  2**0
+  8 .debug_str    000002be  00000000  00000000  00001624  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_loc    000000a0  00000000  00000000  000016b3  2**0
+  9 .debug_loc    000000a0  00000000  00000000  000018e2  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -30,9 +30,9 @@ Disassembly of section .text:
    0:	0c 94 34 00 	jmp	0x68	; 0x68 <__ctors_end>
    4:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
    8:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
-   c:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
+   c:	0c 94 62 00 	jmp	0xc4	; 0xc4 <__vector_3>
   10:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
-  14:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
+  14:	0c 94 53 00 	jmp	0xa6	; 0xa6 <__vector_5>
   18:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   1c:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   20:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
@@ -66,7 +66,7 @@ Disassembly of section .text:
   74:	11 e0       	ldi	r17, 0x01	; 1
   76:	a0 e0       	ldi	r26, 0x00	; 0
   78:	b1 e0       	ldi	r27, 0x01	; 1
-  7a:	ea e6       	ldi	r30, 0x6A	; 106
+  7a:	e8 ef       	ldi	r30, 0xF8	; 248
   7c:	f3 e0       	ldi	r31, 0x03	; 3
   7e:	02 c0       	rjmp	.+4      	; 0x84 <.do_copy_data_start>
 
@@ -92,566 +92,700 @@ Disassembly of section .text:
   94:	a8 30       	cpi	r26, 0x08	; 8
   96:	b1 07       	cpc	r27, r17
   98:	e1 f7       	brne	.-8      	; 0x92 <.do_clear_bss_loop>
-  9a:	0e 94 69 00 	call	0xd2	; 0xd2 <main>
-  9e:	0c 94 8e 01 	jmp	0x31c	; 0x31c <exit>
+  9a:	0e 94 b2 00 	call	0x164	; 0x164 <main>
+  9e:	0c 94 d5 01 	jmp	0x3aa	; 0x3aa <exit>
 
 000000a2 <__bad_interrupt>:
-  a2:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
+  a2:	0c 94 71 00 	jmp	0xe2	; 0xe2 <__vector_default>
 
-000000a6 <pwm_setup>:
-#define PORT_ON( port_letter, number )			port_letter |= (1<<number)
+000000a6 <__vector_5>:
+
+	return 0;
+
+}
+
+SIGNAL(PCINT2_vect){
+  a6:	1f 92       	push	r1
+  a8:	0f 92       	push	r0
+  aa:	0f b6       	in	r0, 0x3f	; 63
+  ac:	0f 92       	push	r0
+  ae:	11 24       	eor	r1, r1
+	// Only enabled for Digital Pin 7, Encoder Left
+	if(bit_is_set(PIND,7)){
+  b0:	4f 9b       	sbis	0x09, 7	; 9
+  b2:	02 c0       	rjmp	.+4      	; 0xb8 <__vector_5+0x12>
+		PORT_ON(PORTB,4);
+  b4:	2c 9a       	sbi	0x05, 4	; 5
+  b6:	01 c0       	rjmp	.+2      	; 0xba <__vector_5+0x14>
+		//delay_us(10);
+	}
+	else{
+		PORT_OFF(PORTB,4);
+  b8:	2c 98       	cbi	0x05, 4	; 5
+		//delay_us(10);
+	}
+	
+}
+  ba:	0f 90       	pop	r0
+  bc:	0f be       	out	0x3f, r0	; 63
+  be:	0f 90       	pop	r0
+  c0:	1f 90       	pop	r1
+  c2:	18 95       	reti
+
+000000c4 <__vector_3>:
+SIGNAL(PCINT0_vect){
+  c4:	1f 92       	push	r1
+  c6:	0f 92       	push	r0
+  c8:	0f b6       	in	r0, 0x3f	; 63
+  ca:	0f 92       	push	r0
+  cc:	11 24       	eor	r1, r1
+	// Enabled for Digital Pin 8, Encoder Left
+	// and Digital Pin 12 and 13, Encoder Right
+	if(bit_is_set(PINB,4)){
+  ce:	1c 9b       	sbis	0x03, 4	; 3
+  d0:	02 c0       	rjmp	.+4      	; 0xd6 <__vector_3+0x12>
+		PORT_ON(PORTB,0);
+  d2:	28 9a       	sbi	0x05, 0	; 5
+  d4:	01 c0       	rjmp	.+2      	; 0xd8 <__vector_3+0x14>
+		//delay_us(10);
+	}
+	else{
+		PORT_OFF(PORTB,0);
+  d6:	28 98       	cbi	0x05, 0	; 5
+		//delay_us(10);
+	}
+	
+}
+  d8:	0f 90       	pop	r0
+  da:	0f be       	out	0x3f, r0	; 63
+  dc:	0f 90       	pop	r0
+  de:	1f 90       	pop	r1
+  e0:	18 95       	reti
+
+000000e2 <__vector_default>:
+
+
+ISR(BADISR_vect){
+  e2:	1f 92       	push	r1
+  e4:	0f 92       	push	r0
+  e6:	0f b6       	in	r0, 0x3f	; 63
+  e8:	0f 92       	push	r0
+  ea:	11 24       	eor	r1, r1
+	//PORT_ON(PORTB,4);
+}
+  ec:	0f 90       	pop	r0
+  ee:	0f be       	out	0x3f, r0	; 63
+  f0:	0f 90       	pop	r0
+  f2:	1f 90       	pop	r1
+  f4:	18 95       	reti
+
+000000f6 <pwm_setup>:
 #define PORT_OFF( port_letter, number )			port_letter &= ~(1<<number)
+
 
 void pwm_setup(void){
 
 	PWM_timer1_On_Pin9();
-  a6:	0e 94 1a 01 	call	0x234	; 0x234 <PWM_timer1_On_Pin9>
+  f6:	0e 94 61 01 	call	0x2c2	; 0x2c2 <PWM_timer1_On_Pin9>
 	PWM_timer1_On_Pin10();
-  aa:	0e 94 23 01 	call	0x246	; 0x246 <PWM_timer1_On_Pin10>
+  fa:	0e 94 6a 01 	call	0x2d4	; 0x2d4 <PWM_timer1_On_Pin10>
 
+	// 20 ms period
 	timer1PWMInitICR(5000);
-  ae:	88 e8       	ldi	r24, 0x88	; 136
-  b0:	93 e1       	ldi	r25, 0x13	; 19
-  b2:	0e 94 cc 00 	call	0x198	; 0x198 <timer1PWMInitICR>
+  fe:	88 e8       	ldi	r24, 0x88	; 136
+ 100:	93 e1       	ldi	r25, 0x13	; 19
+ 102:	0e 94 13 01 	call	0x226	; 0x226 <timer1PWMInitICR>
 
-	// Set pins B1 and B2 to output
+	// Set pins B1 and B2 to output for PWM
 	sbi(DDRB,DDB1);		// Pin 9
-  b6:	21 9a       	sbi	0x04, 1	; 4
+ 106:	21 9a       	sbi	0x04, 1	; 4
 	sbi(DDRB,DDB2);		// Pin 10
-  b8:	22 9a       	sbi	0x04, 2	; 4
+ 108:	22 9a       	sbi	0x04, 2	; 4
 }
-  ba:	08 95       	ret
+ 10a:	08 95       	ret
 
-000000bc <setup_hardware>:
+0000010c <setup_hardware>:
 
 void setup_hardware(void){
 	// Set pins PD0 and PD1 for UART RX and TX respectively
-	DDRD = (0<<DDD0)|(1<<DDD1);
-  bc:	82 e0       	ldi	r24, 0x02	; 2
-  be:	8a b9       	out	0x0a, r24	; 10
-	init_timer0(TIMER_CLK_64);
-  c0:	83 e0       	ldi	r24, 0x03	; 3
-  c2:	0e 94 51 01 	call	0x2a2	; 0x2a2 <init_timer0>
-	init_timer1(TIMER_CLK_64);
-  c6:	83 e0       	ldi	r24, 0x03	; 3
-  c8:	0e 94 5f 01 	call	0x2be	; 0x2be <init_timer1>
-	pwm_setup();
-  cc:	0e 94 53 00 	call	0xa6	; 0xa6 <pwm_setup>
-}
-  d0:	08 95       	ret
+	cbi(DDRD,DDD0);		// Pin 0 RX
+ 10c:	50 98       	cbi	0x0a, 0	; 10
+	sbi(DDRD,DDD1);		// Pin 1 TX
+ 10e:	51 9a       	sbi	0x0a, 1	; 10
 
-000000d2 <main>:
+	// Clear pins for encoders to input
+	cbi(DDRD,DDD7);		// Pin 7  Left  Quadrature Encoder
+ 110:	57 98       	cbi	0x0a, 7	; 10
+	cbi(DDRB,DDB0);		// Pin 8  Left  Quadrature Encoder
+ 112:	20 98       	cbi	0x04, 0	; 4
+	cbi(DDRB,DDB4);		// Pin 12 Right Quadrature Encoder
+ 114:	24 98       	cbi	0x04, 4	; 4
+	cbi(DDRB,DDB5);		// Pin 13 Right Quadrature Encoder
+ 116:	25 98       	cbi	0x04, 5	; 4
+	PORT_ON(PORTD,7);	// Enable pull-up resistor
+ 118:	5f 9a       	sbi	0x0b, 7	; 11
+	PORT_ON(PORTB,0);	// Enable pull-up resistor
+ 11a:	28 9a       	sbi	0x05, 0	; 5
+	PORT_ON(PORTB,4);	// Enable pull-up resistor
+ 11c:	2c 9a       	sbi	0x05, 4	; 5
+	PORT_ON(PORTB,5);	// Enable pull-up resistor
+ 11e:	2d 9a       	sbi	0x05, 5	; 5
+	
+
+	init_timer0(TIMER_CLK_64);
+ 120:	83 e0       	ldi	r24, 0x03	; 3
+ 122:	0e 94 98 01 	call	0x330	; 0x330 <init_timer0>
+	init_timer1(TIMER_CLK_64);
+ 126:	83 e0       	ldi	r24, 0x03	; 3
+ 128:	0e 94 a6 01 	call	0x34c	; 0x34c <init_timer1>
+	pwm_setup();
+ 12c:	0e 94 7b 00 	call	0xf6	; 0xf6 <pwm_setup>
+
+	// Enable DIO Pin 7 to interrupt on change
+	sbi(PCICR,PCIE2);
+ 130:	e8 e6       	ldi	r30, 0x68	; 104
+ 132:	f0 e0       	ldi	r31, 0x00	; 0
+ 134:	80 81       	ld	r24, Z
+ 136:	84 60       	ori	r24, 0x04	; 4
+ 138:	80 83       	st	Z, r24
+	sbi(PCMSK2,PCINT23);// Pin 7
+ 13a:	ad e6       	ldi	r26, 0x6D	; 109
+ 13c:	b0 e0       	ldi	r27, 0x00	; 0
+ 13e:	8c 91       	ld	r24, X
+ 140:	80 68       	ori	r24, 0x80	; 128
+ 142:	8c 93       	st	X, r24
+	
+	sbi(PCICR,PCIE0);
+ 144:	80 81       	ld	r24, Z
+ 146:	81 60       	ori	r24, 0x01	; 1
+ 148:	80 83       	st	Z, r24
+	sbi(PCMSK0,PCINT0);	// Pin 8
+ 14a:	eb e6       	ldi	r30, 0x6B	; 107
+ 14c:	f0 e0       	ldi	r31, 0x00	; 0
+ 14e:	80 81       	ld	r24, Z
+ 150:	81 60       	ori	r24, 0x01	; 1
+ 152:	80 83       	st	Z, r24
+	sbi(PCMSK0,PCINT4);	// Pin 12
+ 154:	80 81       	ld	r24, Z
+ 156:	80 61       	ori	r24, 0x10	; 16
+ 158:	80 83       	st	Z, r24
+	sbi(PCMSK0,PCINT5); // Pin 13
+ 15a:	80 81       	ld	r24, Z
+ 15c:	80 62       	ori	r24, 0x20	; 32
+ 15e:	80 83       	st	Z, r24
+
+
+	// Enable interrupts
+	sei();	// Global interrupt enable
+ 160:	78 94       	sei
+
+}
+ 162:	08 95       	ret
+
+00000164 <main>:
 
 
 
 int main(void){
 
 	setup_hardware();
-  d2:	0e 94 5e 00 	call	0xbc	; 0xbc <setup_hardware>
+ 164:	0e 94 86 00 	call	0x10c	; 0x10c <setup_hardware>
 	PWM_timer1_Set_Pin9(200);
-  d6:	88 ec       	ldi	r24, 0xC8	; 200
-  d8:	90 e0       	ldi	r25, 0x00	; 0
-  da:	0e 94 30 01 	call	0x260	; 0x260 <PWM_timer1_Set_Pin9>
+ 168:	88 ec       	ldi	r24, 0xC8	; 200
+ 16a:	90 e0       	ldi	r25, 0x00	; 0
+ 16c:	0e 94 77 01 	call	0x2ee	; 0x2ee <PWM_timer1_Set_Pin9>
 	PWM_timer1_Set_Pin10(200);
-  de:	88 ec       	ldi	r24, 0xC8	; 200
-  e0:	90 e0       	ldi	r25, 0x00	; 0
-  e2:	0e 94 35 01 	call	0x26a	; 0x26a <PWM_timer1_Set_Pin10>
-		delay_us(100);
-	}
-	*/
-	return 0;
+ 170:	88 ec       	ldi	r24, 0xC8	; 200
+ 172:	90 e0       	ldi	r25, 0x00	; 0
+ 174:	0e 94 7c 01 	call	0x2f8	; 0x2f8 <PWM_timer1_Set_Pin10>
+ 178:	ff cf       	rjmp	.-2      	; 0x178 <main+0x14>
 
-}
-  e6:	80 e0       	ldi	r24, 0x00	; 0
-  e8:	90 e0       	ldi	r25, 0x00	; 0
-  ea:	08 95       	ret
-
-000000ec <PWM_Init_timer1_Pin9>:
+0000017a <PWM_Init_timer1_Pin9>:
 #include <pwm_pico.h>
 
 // Initialize PWM, set timer resolution
 
 void PWM_Init_timer1_Pin9(u08 res){
-  ec:	98 2f       	mov	r25, r24
+ 17a:	98 2f       	mov	r25, r24
 	// enable timer1 as 8,9,10bit PWM
 	sbi(TCCR1B,WGM12);
-  ee:	80 91 81 00 	lds	r24, 0x0081
-  f2:	88 60       	ori	r24, 0x08	; 8
-  f4:	80 93 81 00 	sts	0x0081, r24
+ 17c:	80 91 81 00 	lds	r24, 0x0081
+ 180:	88 60       	ori	r24, 0x08	; 8
+ 182:	80 93 81 00 	sts	0x0081, r24
 	cbi(TCCR1B,WGM13);
-  f8:	80 91 81 00 	lds	r24, 0x0081
-  fc:	8f 7e       	andi	r24, 0xEF	; 239
-  fe:	80 93 81 00 	sts	0x0081, r24
+ 186:	80 91 81 00 	lds	r24, 0x0081
+ 18a:	8f 7e       	andi	r24, 0xEF	; 239
+ 18c:	80 93 81 00 	sts	0x0081, r24
 	if(res == 9)
- 102:	99 30       	cpi	r25, 0x09	; 9
- 104:	49 f4       	brne	.+18     	; 0x118 <PWM_Init_timer1_Pin9+0x2c>
+ 190:	99 30       	cpi	r25, 0x09	; 9
+ 192:	49 f4       	brne	.+18     	; 0x1a6 <PWM_Init_timer1_Pin9+0x2c>
 	{	// 9bit mode
 		sbi(TCCR1A,WGM11);
- 106:	80 91 80 00 	lds	r24, 0x0080
- 10a:	82 60       	ori	r24, 0x02	; 2
- 10c:	80 93 80 00 	sts	0x0080, r24
+ 194:	80 91 80 00 	lds	r24, 0x0080
+ 198:	82 60       	ori	r24, 0x02	; 2
+ 19a:	80 93 80 00 	sts	0x0080, r24
 		cbi(TCCR1A,WGM10);
- 110:	80 91 80 00 	lds	r24, 0x0080
- 114:	8e 7f       	andi	r24, 0xFE	; 254
- 116:	0e c0       	rjmp	.+28     	; 0x134 <PWM_Init_timer1_Pin9+0x48>
+ 19e:	80 91 80 00 	lds	r24, 0x0080
+ 1a2:	8e 7f       	andi	r24, 0xFE	; 254
+ 1a4:	0e c0       	rjmp	.+28     	; 0x1c2 <PWM_Init_timer1_Pin9+0x48>
 	}
 	else if(res == 10 )
- 118:	9a 30       	cpi	r25, 0x0A	; 10
- 11a:	21 f4       	brne	.+8      	; 0x124 <PWM_Init_timer1_Pin9+0x38>
+ 1a6:	9a 30       	cpi	r25, 0x0A	; 10
+ 1a8:	21 f4       	brne	.+8      	; 0x1b2 <PWM_Init_timer1_Pin9+0x38>
 	{	// 10bit mode
 		sbi(TCCR1A,WGM11);
- 11c:	80 91 80 00 	lds	r24, 0x0080
- 120:	82 60       	ori	r24, 0x02	; 2
- 122:	03 c0       	rjmp	.+6      	; 0x12a <PWM_Init_timer1_Pin9+0x3e>
+ 1aa:	80 91 80 00 	lds	r24, 0x0080
+ 1ae:	82 60       	ori	r24, 0x02	; 2
+ 1b0:	03 c0       	rjmp	.+6      	; 0x1b8 <PWM_Init_timer1_Pin9+0x3e>
 		sbi(TCCR1A,WGM10);
 	}
 	else
 	{	// default 8bit mode
 		cbi(TCCR1A,WGM11);
- 124:	80 91 80 00 	lds	r24, 0x0080
- 128:	8d 7f       	andi	r24, 0xFD	; 253
- 12a:	80 93 80 00 	sts	0x0080, r24
+ 1b2:	80 91 80 00 	lds	r24, 0x0080
+ 1b6:	8d 7f       	andi	r24, 0xFD	; 253
+ 1b8:	80 93 80 00 	sts	0x0080, r24
 		sbi(TCCR1A,WGM10);
- 12e:	80 91 80 00 	lds	r24, 0x0080
- 132:	81 60       	ori	r24, 0x01	; 1
- 134:	80 93 80 00 	sts	0x0080, r24
+ 1bc:	80 91 80 00 	lds	r24, 0x0080
+ 1c0:	81 60       	ori	r24, 0x01	; 1
+ 1c2:	80 93 80 00 	sts	0x0080, r24
 	}
 	// clear output compare values
 	OCR1A = 0;
- 138:	10 92 89 00 	sts	0x0089, r1
- 13c:	10 92 88 00 	sts	0x0088, r1
+ 1c6:	10 92 89 00 	sts	0x0089, r1
+ 1ca:	10 92 88 00 	sts	0x0088, r1
 }
- 140:	08 95       	ret
+ 1ce:	08 95       	ret
 
-00000142 <PWM_Init_timer1_Pin10>:
+000001d0 <PWM_Init_timer1_Pin10>:
 void PWM_Init_timer1_Pin10(u08 res){
- 142:	98 2f       	mov	r25, r24
+ 1d0:	98 2f       	mov	r25, r24
 	// enable timer1 as 8,9,10bit PWM
 	cbi(TCCR1B,WGM12);
- 144:	80 91 81 00 	lds	r24, 0x0081
- 148:	87 7f       	andi	r24, 0xF7	; 247
- 14a:	80 93 81 00 	sts	0x0081, r24
+ 1d2:	80 91 81 00 	lds	r24, 0x0081
+ 1d6:	87 7f       	andi	r24, 0xF7	; 247
+ 1d8:	80 93 81 00 	sts	0x0081, r24
 	cbi(TCCR1B,WGM13);
- 14e:	80 91 81 00 	lds	r24, 0x0081
- 152:	8f 7e       	andi	r24, 0xEF	; 239
- 154:	80 93 81 00 	sts	0x0081, r24
+ 1dc:	80 91 81 00 	lds	r24, 0x0081
+ 1e0:	8f 7e       	andi	r24, 0xEF	; 239
+ 1e2:	80 93 81 00 	sts	0x0081, r24
 	if(res == 9)
- 158:	99 30       	cpi	r25, 0x09	; 9
- 15a:	49 f4       	brne	.+18     	; 0x16e <PWM_Init_timer1_Pin10+0x2c>
+ 1e6:	99 30       	cpi	r25, 0x09	; 9
+ 1e8:	49 f4       	brne	.+18     	; 0x1fc <PWM_Init_timer1_Pin10+0x2c>
 	{	// 9bit mode
 		sbi(TCCR1A,WGM11);
- 15c:	80 91 80 00 	lds	r24, 0x0080
- 160:	82 60       	ori	r24, 0x02	; 2
- 162:	80 93 80 00 	sts	0x0080, r24
+ 1ea:	80 91 80 00 	lds	r24, 0x0080
+ 1ee:	82 60       	ori	r24, 0x02	; 2
+ 1f0:	80 93 80 00 	sts	0x0080, r24
 		cbi(TCCR1A,WGM10);
- 166:	80 91 80 00 	lds	r24, 0x0080
- 16a:	8e 7f       	andi	r24, 0xFE	; 254
- 16c:	0e c0       	rjmp	.+28     	; 0x18a <PWM_Init_timer1_Pin10+0x48>
+ 1f4:	80 91 80 00 	lds	r24, 0x0080
+ 1f8:	8e 7f       	andi	r24, 0xFE	; 254
+ 1fa:	0e c0       	rjmp	.+28     	; 0x218 <PWM_Init_timer1_Pin10+0x48>
 	}
 	else if(res == 10 )
- 16e:	9a 30       	cpi	r25, 0x0A	; 10
- 170:	21 f4       	brne	.+8      	; 0x17a <PWM_Init_timer1_Pin10+0x38>
+ 1fc:	9a 30       	cpi	r25, 0x0A	; 10
+ 1fe:	21 f4       	brne	.+8      	; 0x208 <PWM_Init_timer1_Pin10+0x38>
 	{	// 10bit mode
 		sbi(TCCR1A,WGM11);
- 172:	80 91 80 00 	lds	r24, 0x0080
- 176:	82 60       	ori	r24, 0x02	; 2
- 178:	03 c0       	rjmp	.+6      	; 0x180 <PWM_Init_timer1_Pin10+0x3e>
+ 200:	80 91 80 00 	lds	r24, 0x0080
+ 204:	82 60       	ori	r24, 0x02	; 2
+ 206:	03 c0       	rjmp	.+6      	; 0x20e <PWM_Init_timer1_Pin10+0x3e>
 		sbi(TCCR1A,WGM10);
 	}
 	else
 	{	// default 8bit mode
 		cbi(TCCR1A,WGM11);
- 17a:	80 91 80 00 	lds	r24, 0x0080
- 17e:	8d 7f       	andi	r24, 0xFD	; 253
- 180:	80 93 80 00 	sts	0x0080, r24
+ 208:	80 91 80 00 	lds	r24, 0x0080
+ 20c:	8d 7f       	andi	r24, 0xFD	; 253
+ 20e:	80 93 80 00 	sts	0x0080, r24
 		sbi(TCCR1A,WGM10);
- 184:	80 91 80 00 	lds	r24, 0x0080
- 188:	81 60       	ori	r24, 0x01	; 1
- 18a:	80 93 80 00 	sts	0x0080, r24
+ 212:	80 91 80 00 	lds	r24, 0x0080
+ 216:	81 60       	ori	r24, 0x01	; 1
+ 218:	80 93 80 00 	sts	0x0080, r24
 	}
 	// clear output compare values
 	OCR1B = 0;
- 18e:	10 92 8b 00 	sts	0x008B, r1
- 192:	10 92 8a 00 	sts	0x008A, r1
+ 21c:	10 92 8b 00 	sts	0x008B, r1
+ 220:	10 92 8a 00 	sts	0x008A, r1
 }
- 196:	08 95       	ret
+ 224:	08 95       	ret
 
-00000198 <timer1PWMInitICR>:
+00000226 <timer1PWMInitICR>:
 
 void timer1PWMInitICR(u16 topcount)
 {
 	u08 sreg;
 	// set PWM mode with ICR top-count
 	cbi(TCCR1A,WGM10);
- 198:	e0 e8       	ldi	r30, 0x80	; 128
- 19a:	f0 e0       	ldi	r31, 0x00	; 0
- 19c:	20 81       	ld	r18, Z
- 19e:	2e 7f       	andi	r18, 0xFE	; 254
- 1a0:	20 83       	st	Z, r18
+ 226:	e0 e8       	ldi	r30, 0x80	; 128
+ 228:	f0 e0       	ldi	r31, 0x00	; 0
+ 22a:	20 81       	ld	r18, Z
+ 22c:	2e 7f       	andi	r18, 0xFE	; 254
+ 22e:	20 83       	st	Z, r18
 	sbi(TCCR1A,WGM11);
- 1a2:	20 81       	ld	r18, Z
- 1a4:	22 60       	ori	r18, 0x02	; 2
- 1a6:	20 83       	st	Z, r18
+ 230:	20 81       	ld	r18, Z
+ 232:	22 60       	ori	r18, 0x02	; 2
+ 234:	20 83       	st	Z, r18
 	sbi(TCCR1B,WGM12);
- 1a8:	e1 e8       	ldi	r30, 0x81	; 129
- 1aa:	f0 e0       	ldi	r31, 0x00	; 0
- 1ac:	20 81       	ld	r18, Z
- 1ae:	28 60       	ori	r18, 0x08	; 8
- 1b0:	20 83       	st	Z, r18
+ 236:	e1 e8       	ldi	r30, 0x81	; 129
+ 238:	f0 e0       	ldi	r31, 0x00	; 0
+ 23a:	20 81       	ld	r18, Z
+ 23c:	28 60       	ori	r18, 0x08	; 8
+ 23e:	20 83       	st	Z, r18
 	sbi(TCCR1B,WGM13);
- 1b2:	20 81       	ld	r18, Z
- 1b4:	20 61       	ori	r18, 0x10	; 16
- 1b6:	20 83       	st	Z, r18
+ 240:	20 81       	ld	r18, Z
+ 242:	20 61       	ori	r18, 0x10	; 16
+ 244:	20 83       	st	Z, r18
 	
 	// Save global interrupt flag
 	sreg = SREG;
- 1b8:	2f b7       	in	r18, 0x3f	; 63
+ 246:	2f b7       	in	r18, 0x3f	; 63
 	// Disable interrupts
 	cli();
- 1ba:	f8 94       	cli
+ 248:	f8 94       	cli
 	// set top count value
 	ICR1 = topcount;
- 1bc:	90 93 87 00 	sts	0x0087, r25
- 1c0:	80 93 86 00 	sts	0x0086, r24
+ 24a:	90 93 87 00 	sts	0x0087, r25
+ 24e:	80 93 86 00 	sts	0x0086, r24
 	// Restore interrupts
 	SREG = sreg;
- 1c4:	2f bf       	out	0x3f, r18	; 63
+ 252:	2f bf       	out	0x3f, r18	; 63
 	
 	// clear output compare values
 	OCR1A = 0;
- 1c6:	10 92 89 00 	sts	0x0089, r1
- 1ca:	10 92 88 00 	sts	0x0088, r1
+ 254:	10 92 89 00 	sts	0x0089, r1
+ 258:	10 92 88 00 	sts	0x0088, r1
 	OCR1B = 0;
- 1ce:	10 92 8b 00 	sts	0x008B, r1
- 1d2:	10 92 8a 00 	sts	0x008A, r1
+ 25c:	10 92 8b 00 	sts	0x008B, r1
+ 260:	10 92 8a 00 	sts	0x008A, r1
 }
- 1d6:	08 95       	ret
+ 264:	08 95       	ret
 
-000001d8 <PWM_timer0_Off_Pin5>:
+00000266 <PWM_timer0_Off_Pin5>:
 
 // Stop PWM
 void PWM_timer0_Off_Pin5(void){
 	cbi(TCCR0A,COM0B1);
- 1d8:	84 b5       	in	r24, 0x24	; 36
- 1da:	8f 7d       	andi	r24, 0xDF	; 223
- 1dc:	84 bd       	out	0x24, r24	; 36
+ 266:	84 b5       	in	r24, 0x24	; 36
+ 268:	8f 7d       	andi	r24, 0xDF	; 223
+ 26a:	84 bd       	out	0x24, r24	; 36
 	cbi(TCCR0A,COM0B0);
- 1de:	84 b5       	in	r24, 0x24	; 36
- 1e0:	8f 7e       	andi	r24, 0xEF	; 239
- 1e2:	84 bd       	out	0x24, r24	; 36
+ 26c:	84 b5       	in	r24, 0x24	; 36
+ 26e:	8f 7e       	andi	r24, 0xEF	; 239
+ 270:	84 bd       	out	0x24, r24	; 36
 }
- 1e4:	08 95       	ret
+ 272:	08 95       	ret
 
-000001e6 <PWM_timer0_Off_Pin6>:
+00000274 <PWM_timer0_Off_Pin6>:
 void PWM_timer0_Off_Pin6(void){
 	cbi(TCCR0A,COM0A1);
- 1e6:	84 b5       	in	r24, 0x24	; 36
- 1e8:	8f 77       	andi	r24, 0x7F	; 127
- 1ea:	84 bd       	out	0x24, r24	; 36
+ 274:	84 b5       	in	r24, 0x24	; 36
+ 276:	8f 77       	andi	r24, 0x7F	; 127
+ 278:	84 bd       	out	0x24, r24	; 36
 	cbi(TCCR0A,COM0A0);
- 1ec:	84 b5       	in	r24, 0x24	; 36
- 1ee:	8f 7b       	andi	r24, 0xBF	; 191
- 1f0:	84 bd       	out	0x24, r24	; 36
+ 27a:	84 b5       	in	r24, 0x24	; 36
+ 27c:	8f 7b       	andi	r24, 0xBF	; 191
+ 27e:	84 bd       	out	0x24, r24	; 36
 }
- 1f2:	08 95       	ret
+ 280:	08 95       	ret
 
-000001f4 <PWM_timer1_Off_Pin9>:
+00000282 <PWM_timer1_Off_Pin9>:
 void PWM_timer1_Off_Pin9(void){
 	cbi(TCCR1A,COM1B1);
- 1f4:	e0 e8       	ldi	r30, 0x80	; 128
- 1f6:	f0 e0       	ldi	r31, 0x00	; 0
- 1f8:	80 81       	ld	r24, Z
- 1fa:	8f 7d       	andi	r24, 0xDF	; 223
- 1fc:	80 83       	st	Z, r24
+ 282:	e0 e8       	ldi	r30, 0x80	; 128
+ 284:	f0 e0       	ldi	r31, 0x00	; 0
+ 286:	80 81       	ld	r24, Z
+ 288:	8f 7d       	andi	r24, 0xDF	; 223
+ 28a:	80 83       	st	Z, r24
 	cbi(TCCR1A,COM1B0);
- 1fe:	80 81       	ld	r24, Z
- 200:	8f 7e       	andi	r24, 0xEF	; 239
- 202:	80 83       	st	Z, r24
+ 28c:	80 81       	ld	r24, Z
+ 28e:	8f 7e       	andi	r24, 0xEF	; 239
+ 290:	80 83       	st	Z, r24
 }
- 204:	08 95       	ret
+ 292:	08 95       	ret
 
-00000206 <PWM_timer1_Off_Pin10>:
+00000294 <PWM_timer1_Off_Pin10>:
 void PWM_timer1_Off_Pin10(void){
 	cbi(TCCR1A,COM1A1);
- 206:	e0 e8       	ldi	r30, 0x80	; 128
- 208:	f0 e0       	ldi	r31, 0x00	; 0
- 20a:	80 81       	ld	r24, Z
- 20c:	8f 77       	andi	r24, 0x7F	; 127
- 20e:	80 83       	st	Z, r24
+ 294:	e0 e8       	ldi	r30, 0x80	; 128
+ 296:	f0 e0       	ldi	r31, 0x00	; 0
+ 298:	80 81       	ld	r24, Z
+ 29a:	8f 77       	andi	r24, 0x7F	; 127
+ 29c:	80 83       	st	Z, r24
 	cbi(TCCR1A,COM1A0);
- 210:	80 81       	ld	r24, Z
- 212:	8f 7b       	andi	r24, 0xBF	; 191
- 214:	80 83       	st	Z, r24
+ 29e:	80 81       	ld	r24, Z
+ 2a0:	8f 7b       	andi	r24, 0xBF	; 191
+ 2a2:	80 83       	st	Z, r24
 }
- 216:	08 95       	ret
+ 2a4:	08 95       	ret
 
-00000218 <PWM_timer0_On_Pin5>:
+000002a6 <PWM_timer0_On_Pin5>:
 
 // Start PWM
 void PWM_timer0_On_Pin5(void){
 	sbi(TCCR0A,COM0B1);
- 218:	84 b5       	in	r24, 0x24	; 36
- 21a:	80 62       	ori	r24, 0x20	; 32
- 21c:	84 bd       	out	0x24, r24	; 36
+ 2a6:	84 b5       	in	r24, 0x24	; 36
+ 2a8:	80 62       	ori	r24, 0x20	; 32
+ 2aa:	84 bd       	out	0x24, r24	; 36
 	cbi(TCCR0A,COM0B0);
- 21e:	84 b5       	in	r24, 0x24	; 36
- 220:	8f 7e       	andi	r24, 0xEF	; 239
- 222:	84 bd       	out	0x24, r24	; 36
+ 2ac:	84 b5       	in	r24, 0x24	; 36
+ 2ae:	8f 7e       	andi	r24, 0xEF	; 239
+ 2b0:	84 bd       	out	0x24, r24	; 36
 }
- 224:	08 95       	ret
+ 2b2:	08 95       	ret
 
-00000226 <PWM_timer0_On_Pin6>:
+000002b4 <PWM_timer0_On_Pin6>:
 void PWM_timer0_On_Pin6(void){
 	sbi(TCCR0A,COM0A1);
- 226:	84 b5       	in	r24, 0x24	; 36
- 228:	80 68       	ori	r24, 0x80	; 128
- 22a:	84 bd       	out	0x24, r24	; 36
+ 2b4:	84 b5       	in	r24, 0x24	; 36
+ 2b6:	80 68       	ori	r24, 0x80	; 128
+ 2b8:	84 bd       	out	0x24, r24	; 36
 	cbi(TCCR0A,COM0A0);
- 22c:	84 b5       	in	r24, 0x24	; 36
- 22e:	8f 7b       	andi	r24, 0xBF	; 191
- 230:	84 bd       	out	0x24, r24	; 36
+ 2ba:	84 b5       	in	r24, 0x24	; 36
+ 2bc:	8f 7b       	andi	r24, 0xBF	; 191
+ 2be:	84 bd       	out	0x24, r24	; 36
 }
- 232:	08 95       	ret
+ 2c0:	08 95       	ret
 
-00000234 <PWM_timer1_On_Pin9>:
+000002c2 <PWM_timer1_On_Pin9>:
 void PWM_timer1_On_Pin9(void){
 	sbi(TCCR1A,COM1B1);
- 234:	e0 e8       	ldi	r30, 0x80	; 128
- 236:	f0 e0       	ldi	r31, 0x00	; 0
- 238:	80 81       	ld	r24, Z
- 23a:	80 62       	ori	r24, 0x20	; 32
- 23c:	80 83       	st	Z, r24
+ 2c2:	e0 e8       	ldi	r30, 0x80	; 128
+ 2c4:	f0 e0       	ldi	r31, 0x00	; 0
+ 2c6:	80 81       	ld	r24, Z
+ 2c8:	80 62       	ori	r24, 0x20	; 32
+ 2ca:	80 83       	st	Z, r24
 	cbi(TCCR1A,COM1B0);
- 23e:	80 81       	ld	r24, Z
- 240:	8f 7e       	andi	r24, 0xEF	; 239
- 242:	80 83       	st	Z, r24
+ 2cc:	80 81       	ld	r24, Z
+ 2ce:	8f 7e       	andi	r24, 0xEF	; 239
+ 2d0:	80 83       	st	Z, r24
 }
- 244:	08 95       	ret
+ 2d2:	08 95       	ret
 
-00000246 <PWM_timer1_On_Pin10>:
+000002d4 <PWM_timer1_On_Pin10>:
 void PWM_timer1_On_Pin10(void){
 	sbi(TCCR1A,COM1A1);
- 246:	e0 e8       	ldi	r30, 0x80	; 128
- 248:	f0 e0       	ldi	r31, 0x00	; 0
- 24a:	80 81       	ld	r24, Z
- 24c:	80 68       	ori	r24, 0x80	; 128
- 24e:	80 83       	st	Z, r24
+ 2d4:	e0 e8       	ldi	r30, 0x80	; 128
+ 2d6:	f0 e0       	ldi	r31, 0x00	; 0
+ 2d8:	80 81       	ld	r24, Z
+ 2da:	80 68       	ori	r24, 0x80	; 128
+ 2dc:	80 83       	st	Z, r24
 	cbi(TCCR1A,COM1A0);
- 250:	80 81       	ld	r24, Z
- 252:	8f 7b       	andi	r24, 0xBF	; 191
- 254:	80 83       	st	Z, r24
+ 2de:	80 81       	ld	r24, Z
+ 2e0:	8f 7b       	andi	r24, 0xBF	; 191
+ 2e2:	80 83       	st	Z, r24
 }
- 256:	08 95       	ret
+ 2e4:	08 95       	ret
 
-00000258 <PWM_timer0_Set_Pin5>:
+000002e6 <PWM_timer0_Set_Pin5>:
 // Set duty
 void PWM_timer0_Set_Pin5(u16 duty){
 	OCR0B = duty;
- 258:	88 bd       	out	0x28, r24	; 40
+ 2e6:	88 bd       	out	0x28, r24	; 40
 }
- 25a:	08 95       	ret
+ 2e8:	08 95       	ret
 
-0000025c <PWM_timer0_Set_Pin6>:
+000002ea <PWM_timer0_Set_Pin6>:
 void PWM_timer0_Set_Pin6(u16 duty){
 	OCR0A = duty;
- 25c:	87 bd       	out	0x27, r24	; 39
+ 2ea:	87 bd       	out	0x27, r24	; 39
 }
- 25e:	08 95       	ret
+ 2ec:	08 95       	ret
 
-00000260 <PWM_timer1_Set_Pin9>:
+000002ee <PWM_timer1_Set_Pin9>:
 void PWM_timer1_Set_Pin9(u16 duty){
 	OCR1B = duty;
- 260:	90 93 8b 00 	sts	0x008B, r25
- 264:	80 93 8a 00 	sts	0x008A, r24
+ 2ee:	90 93 8b 00 	sts	0x008B, r25
+ 2f2:	80 93 8a 00 	sts	0x008A, r24
 }
- 268:	08 95       	ret
+ 2f6:	08 95       	ret
 
-0000026a <PWM_timer1_Set_Pin10>:
+000002f8 <PWM_timer1_Set_Pin10>:
 void PWM_timer1_Set_Pin10(u16 duty){
 	OCR1A = duty;
- 26a:	90 93 89 00 	sts	0x0089, r25
- 26e:	80 93 88 00 	sts	0x0088, r24
+ 2f8:	90 93 89 00 	sts	0x0089, r25
+ 2fc:	80 93 88 00 	sts	0x0088, r24
 }
- 272:	08 95       	ret
+ 300:	08 95       	ret
 
-00000274 <reset_timer0>:
+00000302 <reset_timer0>:
 volatile uint32_t timer0_ovrflow_cnt;
 volatile uint32_t timer1_ovrflow_cnt;
 
 void reset_timer0(void)
 {
     TCNT0 = timer0_ovrflow_cnt = 0;
- 274:	10 92 04 01 	sts	0x0104, r1
- 278:	10 92 05 01 	sts	0x0105, r1
- 27c:	10 92 06 01 	sts	0x0106, r1
- 280:	10 92 07 01 	sts	0x0107, r1
- 284:	16 bc       	out	0x26, r1	; 38
+ 302:	10 92 04 01 	sts	0x0104, r1
+ 306:	10 92 05 01 	sts	0x0105, r1
+ 30a:	10 92 06 01 	sts	0x0106, r1
+ 30e:	10 92 07 01 	sts	0x0107, r1
+ 312:	16 bc       	out	0x26, r1	; 38
 }
- 286:	08 95       	ret
+ 314:	08 95       	ret
 
-00000288 <reset_timer1>:
+00000316 <reset_timer1>:
 void reset_timer1(void)
 {
     TCNT1 = timer1_ovrflow_cnt = 0;
- 288:	10 92 00 01 	sts	0x0100, r1
- 28c:	10 92 01 01 	sts	0x0101, r1
- 290:	10 92 02 01 	sts	0x0102, r1
- 294:	10 92 03 01 	sts	0x0103, r1
- 298:	10 92 85 00 	sts	0x0085, r1
- 29c:	10 92 84 00 	sts	0x0084, r1
+ 316:	10 92 00 01 	sts	0x0100, r1
+ 31a:	10 92 01 01 	sts	0x0101, r1
+ 31e:	10 92 02 01 	sts	0x0102, r1
+ 322:	10 92 03 01 	sts	0x0103, r1
+ 326:	10 92 85 00 	sts	0x0085, r1
+ 32a:	10 92 84 00 	sts	0x0084, r1
 }
- 2a0:	08 95       	ret
+ 32e:	08 95       	ret
 
-000002a2 <init_timer0>:
+00000330 <init_timer0>:
 void init_timer0(const u08 prescaler)
 {
   TCCR0B = prescaler;
- 2a2:	85 bd       	out	0x25, r24	; 37
+ 330:	85 bd       	out	0x25, r24	; 37
   TIMSK0 = _BV(TOIE0); // enable interrupts
- 2a4:	81 e0       	ldi	r24, 0x01	; 1
- 2a6:	80 93 6e 00 	sts	0x006E, r24
+ 332:	81 e0       	ldi	r24, 0x01	; 1
+ 334:	80 93 6e 00 	sts	0x006E, r24
 volatile uint32_t timer0_ovrflow_cnt;
 volatile uint32_t timer1_ovrflow_cnt;
 
 void reset_timer0(void)
 {
     TCNT0 = timer0_ovrflow_cnt = 0;
- 2aa:	10 92 04 01 	sts	0x0104, r1
- 2ae:	10 92 05 01 	sts	0x0105, r1
- 2b2:	10 92 06 01 	sts	0x0106, r1
- 2b6:	10 92 07 01 	sts	0x0107, r1
- 2ba:	16 bc       	out	0x26, r1	; 38
+ 338:	10 92 04 01 	sts	0x0104, r1
+ 33c:	10 92 05 01 	sts	0x0105, r1
+ 340:	10 92 06 01 	sts	0x0106, r1
+ 344:	10 92 07 01 	sts	0x0107, r1
+ 348:	16 bc       	out	0x26, r1	; 38
 void init_timer0(const u08 prescaler)
 {
   TCCR0B = prescaler;
   TIMSK0 = _BV(TOIE0); // enable interrupts
   reset_timer0(); // reset counter
 }
- 2bc:	08 95       	ret
+ 34a:	08 95       	ret
 
-000002be <init_timer1>:
+0000034c <init_timer1>:
 void init_timer1(const u08 prescaler)
 {
   TCCR1B = prescaler;
- 2be:	80 93 81 00 	sts	0x0081, r24
+ 34c:	80 93 81 00 	sts	0x0081, r24
   TIMSK1 = _BV(TOIE1); // enable interrupts
- 2c2:	81 e0       	ldi	r24, 0x01	; 1
- 2c4:	80 93 6f 00 	sts	0x006F, r24
+ 350:	81 e0       	ldi	r24, 0x01	; 1
+ 352:	80 93 6f 00 	sts	0x006F, r24
 {
     TCNT0 = timer0_ovrflow_cnt = 0;
 }
 void reset_timer1(void)
 {
     TCNT1 = timer1_ovrflow_cnt = 0;
- 2c8:	10 92 00 01 	sts	0x0100, r1
- 2cc:	10 92 01 01 	sts	0x0101, r1
- 2d0:	10 92 02 01 	sts	0x0102, r1
- 2d4:	10 92 03 01 	sts	0x0103, r1
- 2d8:	10 92 85 00 	sts	0x0085, r1
- 2dc:	10 92 84 00 	sts	0x0084, r1
+ 356:	10 92 00 01 	sts	0x0100, r1
+ 35a:	10 92 01 01 	sts	0x0101, r1
+ 35e:	10 92 02 01 	sts	0x0102, r1
+ 362:	10 92 03 01 	sts	0x0103, r1
+ 366:	10 92 85 00 	sts	0x0085, r1
+ 36a:	10 92 84 00 	sts	0x0084, r1
 void init_timer1(const u08 prescaler)
 {
   TCCR1B = prescaler;
   TIMSK1 = _BV(TOIE1); // enable interrupts
   reset_timer1(); // reset counter
 }
- 2e0:	08 95       	ret
+ 36e:	08 95       	ret
 
-000002e2 <delay_us>:
+00000370 <delay_us>:
 void delay_us(unsigned short time_us) 
 {
 	unsigned short delay_loops;
 	register unsigned short i;
 
 	delay_loops = ((time_us * CYCLES_PER_US)+3) / (2*5); // +3 for rounding up (dirty) 
- 2e2:	a0 e0       	ldi	r26, 0x00	; 0
- 2e4:	b0 e0       	ldi	r27, 0x00	; 0
- 2e6:	24 e0       	ldi	r18, 0x04	; 4
- 2e8:	88 0f       	add	r24, r24
- 2ea:	99 1f       	adc	r25, r25
- 2ec:	aa 1f       	adc	r26, r26
- 2ee:	bb 1f       	adc	r27, r27
- 2f0:	2a 95       	dec	r18
- 2f2:	d1 f7       	brne	.-12     	; 0x2e8 <delay_us+0x6>
- 2f4:	03 96       	adiw	r24, 0x03	; 3
- 2f6:	a1 1d       	adc	r26, r1
- 2f8:	b1 1d       	adc	r27, r1
- 2fa:	bc 01       	movw	r22, r24
- 2fc:	cd 01       	movw	r24, r26
- 2fe:	2a e0       	ldi	r18, 0x0A	; 10
- 300:	30 e0       	ldi	r19, 0x00	; 0
- 302:	40 e0       	ldi	r20, 0x00	; 0
- 304:	50 e0       	ldi	r21, 0x00	; 0
- 306:	0e 94 91 01 	call	0x322	; 0x322 <__udivmodsi4>
- 30a:	80 e0       	ldi	r24, 0x00	; 0
- 30c:	90 e0       	ldi	r25, 0x00	; 0
- 30e:	02 c0       	rjmp	.+4      	; 0x314 <delay_us+0x32>
+ 370:	a0 e0       	ldi	r26, 0x00	; 0
+ 372:	b0 e0       	ldi	r27, 0x00	; 0
+ 374:	24 e0       	ldi	r18, 0x04	; 4
+ 376:	88 0f       	add	r24, r24
+ 378:	99 1f       	adc	r25, r25
+ 37a:	aa 1f       	adc	r26, r26
+ 37c:	bb 1f       	adc	r27, r27
+ 37e:	2a 95       	dec	r18
+ 380:	d1 f7       	brne	.-12     	; 0x376 <delay_us+0x6>
+ 382:	03 96       	adiw	r24, 0x03	; 3
+ 384:	a1 1d       	adc	r26, r1
+ 386:	b1 1d       	adc	r27, r1
+ 388:	bc 01       	movw	r22, r24
+ 38a:	cd 01       	movw	r24, r26
+ 38c:	2a e0       	ldi	r18, 0x0A	; 10
+ 38e:	30 e0       	ldi	r19, 0x00	; 0
+ 390:	40 e0       	ldi	r20, 0x00	; 0
+ 392:	50 e0       	ldi	r21, 0x00	; 0
+ 394:	0e 94 d8 01 	call	0x3b0	; 0x3b0 <__udivmodsi4>
+ 398:	80 e0       	ldi	r24, 0x00	; 0
+ 39a:	90 e0       	ldi	r25, 0x00	; 0
+ 39c:	02 c0       	rjmp	.+4      	; 0x3a2 <delay_us+0x32>
 
 	// one loop takes 5 cpu cycles 
 	for (i=0; i < delay_loops; i++) {
 		asm("nop");
- 310:	00 00       	nop
+ 39e:	00 00       	nop
 	register unsigned short i;
 
 	delay_loops = ((time_us * CYCLES_PER_US)+3) / (2*5); // +3 for rounding up (dirty) 
 
 	// one loop takes 5 cpu cycles 
 	for (i=0; i < delay_loops; i++) {
- 312:	01 96       	adiw	r24, 0x01	; 1
- 314:	82 17       	cp	r24, r18
- 316:	93 07       	cpc	r25, r19
- 318:	d8 f3       	brcs	.-10     	; 0x310 <delay_us+0x2e>
+ 3a0:	01 96       	adiw	r24, 0x01	; 1
+ 3a2:	82 17       	cp	r24, r18
+ 3a4:	93 07       	cpc	r25, r19
+ 3a6:	d8 f3       	brcs	.-10     	; 0x39e <delay_us+0x2e>
 		asm("nop");
 	};
 }
- 31a:	08 95       	ret
+ 3a8:	08 95       	ret
 
-0000031c <exit>:
- 31c:	f8 94       	cli
- 31e:	0c 94 b3 01 	jmp	0x366	; 0x366 <_exit>
+000003aa <exit>:
+ 3aa:	f8 94       	cli
+ 3ac:	0c 94 fa 01 	jmp	0x3f4	; 0x3f4 <_exit>
 
-00000322 <__udivmodsi4>:
- 322:	a1 e2       	ldi	r26, 0x21	; 33
- 324:	1a 2e       	mov	r1, r26
- 326:	aa 1b       	sub	r26, r26
- 328:	bb 1b       	sub	r27, r27
- 32a:	fd 01       	movw	r30, r26
- 32c:	0d c0       	rjmp	.+26     	; 0x348 <__udivmodsi4_ep>
+000003b0 <__udivmodsi4>:
+ 3b0:	a1 e2       	ldi	r26, 0x21	; 33
+ 3b2:	1a 2e       	mov	r1, r26
+ 3b4:	aa 1b       	sub	r26, r26
+ 3b6:	bb 1b       	sub	r27, r27
+ 3b8:	fd 01       	movw	r30, r26
+ 3ba:	0d c0       	rjmp	.+26     	; 0x3d6 <__udivmodsi4_ep>
 
-0000032e <__udivmodsi4_loop>:
- 32e:	aa 1f       	adc	r26, r26
- 330:	bb 1f       	adc	r27, r27
- 332:	ee 1f       	adc	r30, r30
- 334:	ff 1f       	adc	r31, r31
- 336:	a2 17       	cp	r26, r18
- 338:	b3 07       	cpc	r27, r19
- 33a:	e4 07       	cpc	r30, r20
- 33c:	f5 07       	cpc	r31, r21
- 33e:	20 f0       	brcs	.+8      	; 0x348 <__udivmodsi4_ep>
- 340:	a2 1b       	sub	r26, r18
- 342:	b3 0b       	sbc	r27, r19
- 344:	e4 0b       	sbc	r30, r20
- 346:	f5 0b       	sbc	r31, r21
+000003bc <__udivmodsi4_loop>:
+ 3bc:	aa 1f       	adc	r26, r26
+ 3be:	bb 1f       	adc	r27, r27
+ 3c0:	ee 1f       	adc	r30, r30
+ 3c2:	ff 1f       	adc	r31, r31
+ 3c4:	a2 17       	cp	r26, r18
+ 3c6:	b3 07       	cpc	r27, r19
+ 3c8:	e4 07       	cpc	r30, r20
+ 3ca:	f5 07       	cpc	r31, r21
+ 3cc:	20 f0       	brcs	.+8      	; 0x3d6 <__udivmodsi4_ep>
+ 3ce:	a2 1b       	sub	r26, r18
+ 3d0:	b3 0b       	sbc	r27, r19
+ 3d2:	e4 0b       	sbc	r30, r20
+ 3d4:	f5 0b       	sbc	r31, r21
 
-00000348 <__udivmodsi4_ep>:
- 348:	66 1f       	adc	r22, r22
- 34a:	77 1f       	adc	r23, r23
- 34c:	88 1f       	adc	r24, r24
- 34e:	99 1f       	adc	r25, r25
- 350:	1a 94       	dec	r1
- 352:	69 f7       	brne	.-38     	; 0x32e <__udivmodsi4_loop>
- 354:	60 95       	com	r22
- 356:	70 95       	com	r23
- 358:	80 95       	com	r24
- 35a:	90 95       	com	r25
- 35c:	9b 01       	movw	r18, r22
- 35e:	ac 01       	movw	r20, r24
- 360:	bd 01       	movw	r22, r26
- 362:	cf 01       	movw	r24, r30
- 364:	08 95       	ret
+000003d6 <__udivmodsi4_ep>:
+ 3d6:	66 1f       	adc	r22, r22
+ 3d8:	77 1f       	adc	r23, r23
+ 3da:	88 1f       	adc	r24, r24
+ 3dc:	99 1f       	adc	r25, r25
+ 3de:	1a 94       	dec	r1
+ 3e0:	69 f7       	brne	.-38     	; 0x3bc <__udivmodsi4_loop>
+ 3e2:	60 95       	com	r22
+ 3e4:	70 95       	com	r23
+ 3e6:	80 95       	com	r24
+ 3e8:	90 95       	com	r25
+ 3ea:	9b 01       	movw	r18, r22
+ 3ec:	ac 01       	movw	r20, r24
+ 3ee:	bd 01       	movw	r22, r26
+ 3f0:	cf 01       	movw	r24, r30
+ 3f2:	08 95       	ret
 
-00000366 <_exit>:
- 366:	f8 94       	cli
+000003f4 <_exit>:
+ 3f4:	f8 94       	cli
 
-00000368 <__stop_program>:
- 368:	ff cf       	rjmp	.-2      	; 0x368 <__stop_program>
+000003f6 <__stop_program>:
+ 3f6:	ff cf       	rjmp	.-2      	; 0x3f6 <__stop_program>

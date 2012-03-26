@@ -131,11 +131,10 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000      0x36a
+.text           0x00000000      0x3f8
  *(.vectors)
  .vectors       0x00000000       0x68 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm168.o
                 0x00000000                __vectors
-                0x00000000                __vector_default
  *(.vectors)
  *(.progmem.gcc*)
  *(.progmem*)
@@ -193,7 +192,6 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
                 0x000000a2                __vector_12
                 0x000000a2                __bad_interrupt
                 0x000000a2                __vector_6
-                0x000000a2                __vector_3
                 0x000000a2                __vector_23
                 0x000000a2                __vector_25
                 0x000000a2                __vector_11
@@ -201,7 +199,6 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
                 0x000000a2                __vector_17
                 0x000000a2                __vector_19
                 0x000000a2                __vector_7
-                0x000000a2                __vector_5
                 0x000000a2                __vector_4
                 0x000000a2                __vector_9
                 0x000000a2                __vector_2
@@ -213,49 +210,52 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
                 0x000000a2                __vector_16
                 0x000000a2                __vector_18
                 0x000000a2                __vector_20
- .text          0x000000a6       0x46 picoBoard.o
-                0x000000bc                setup_hardware
-                0x000000a6                pwm_setup
-                0x000000d2                main
- .text          0x000000ec      0x188 pwm_pico.o
-                0x00000260                PWM_timer1_Set_Pin9
-                0x000001d8                PWM_timer0_Off_Pin5
-                0x00000206                PWM_timer1_Off_Pin10
-                0x00000218                PWM_timer0_On_Pin5
-                0x00000234                PWM_timer1_On_Pin9
-                0x0000025c                PWM_timer0_Set_Pin6
-                0x00000246                PWM_timer1_On_Pin10
-                0x00000198                timer1PWMInitICR
-                0x00000142                PWM_Init_timer1_Pin10
-                0x00000258                PWM_timer0_Set_Pin5
-                0x0000026a                PWM_timer1_Set_Pin10
-                0x000000ec                PWM_Init_timer1_Pin9
-                0x00000226                PWM_timer0_On_Pin6
-                0x000001e6                PWM_timer0_Off_Pin6
-                0x000001f4                PWM_timer1_Off_Pin9
- .text          0x00000274       0xa8 timer_pico.o
-                0x00000274                reset_timer0
-                0x000002a2                init_timer0
-                0x000002e2                delay_us
-                0x000002be                init_timer1
-                0x00000288                reset_timer1
- .text          0x0000031c        0x6 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(exit.o)
-                0x0000031c                exit
- .text          0x00000322        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
- .text          0x00000322        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
- .text          0x00000322        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
- .text          0x00000322        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
-                0x00000322                . = ALIGN (0x2)
+ .text          0x000000a6       0xd4 picoBoard.o
+                0x0000010c                setup_hardware
+                0x000000c4                __vector_3
+                0x000000f6                pwm_setup
+                0x000000e2                __vector_default
+                0x000000a6                __vector_5
+                0x00000164                main
+ .text          0x0000017a      0x188 pwm_pico.o
+                0x000002ee                PWM_timer1_Set_Pin9
+                0x00000266                PWM_timer0_Off_Pin5
+                0x00000294                PWM_timer1_Off_Pin10
+                0x000002a6                PWM_timer0_On_Pin5
+                0x000002c2                PWM_timer1_On_Pin9
+                0x000002ea                PWM_timer0_Set_Pin6
+                0x000002d4                PWM_timer1_On_Pin10
+                0x00000226                timer1PWMInitICR
+                0x000001d0                PWM_Init_timer1_Pin10
+                0x000002e6                PWM_timer0_Set_Pin5
+                0x000002f8                PWM_timer1_Set_Pin10
+                0x0000017a                PWM_Init_timer1_Pin9
+                0x000002b4                PWM_timer0_On_Pin6
+                0x00000274                PWM_timer0_Off_Pin6
+                0x00000282                PWM_timer1_Off_Pin9
+ .text          0x00000302       0xa8 timer_pico.o
+                0x00000302                reset_timer0
+                0x00000330                init_timer0
+                0x00000370                delay_us
+                0x0000034c                init_timer1
+                0x00000316                reset_timer1
+ .text          0x000003aa        0x6 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(exit.o)
+                0x000003aa                exit
+ .text          0x000003b0        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+ .text          0x000003b0        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text          0x000003b0        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text          0x000003b0        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                0x000003b0                . = ALIGN (0x2)
  *(.text.*)
- .text.libgcc   0x00000322       0x44 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
-                0x00000322                __udivmodsi4
- .text.libgcc   0x00000366        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
- .text.libgcc   0x00000366        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
- .text.libgcc   0x00000366        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
-                0x00000366                . = ALIGN (0x2)
+ .text.libgcc   0x000003b0       0x44 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+                0x000003b0                __udivmodsi4
+ .text.libgcc   0x000003f4        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text.libgcc   0x000003f4        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text.libgcc   0x000003f4        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                0x000003f4                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00000366        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
-                0x00000366                _exit
+ .fini9         0x000003f4        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                0x000003f4                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -274,11 +274,11 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00000366        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .fini0         0x000003f4        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
  *(.fini0)
-                0x0000036a                _etext = .
+                0x000003f8                _etext = .
 
-.data           0x00800100        0x0 load address 0x0000036a
+.data           0x00800100        0x0 load address 0x000003f8
                 0x00800100                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800100        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm168.o
@@ -316,8 +316,8 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
                 0x00800100                timer1_ovrflow_cnt
                 0x00800104                timer0_ovrflow_cnt
                 0x00800108                PROVIDE (__bss_end, .)
-                0x0000036a                __data_load_start = LOADADDR (.data)
-                0x0000036a                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x000003f8                __data_load_start = LOADADDR (.data)
+                0x000003f8                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800108        0x0
                 0x00800108                PROVIDE (__noinit_start, .)
@@ -385,20 +385,20 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
                 0x00000040       0x20 timer_pico.o
 
 .debug_pubnames
-                0x00000000      0x244
+                0x00000000      0x277
  *(.debug_pubnames)
  .debug_pubnames
-                0x00000000       0x3c picoBoard.o
+                0x00000000       0x6f picoBoard.o
  .debug_pubnames
-                0x0000003c      0x179 pwm_pico.o
+                0x0000006f      0x179 pwm_pico.o
  .debug_pubnames
-                0x000001b5       0x8f timer_pico.o
+                0x000001e8       0x8f timer_pico.o
 
-.debug_info     0x00000000      0x4b8
+.debug_info     0x00000000      0x4f4
  *(.debug_info)
- .debug_info    0x00000000       0xb6 picoBoard.o
- .debug_info    0x000000b6      0x25c pwm_pico.o
- .debug_info    0x00000312      0x1a6 timer_pico.o
+ .debug_info    0x00000000       0xf2 picoBoard.o
+ .debug_info    0x000000f2      0x25c pwm_pico.o
+ .debug_info    0x0000034e      0x1a6 timer_pico.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev   0x00000000      0x1ea
@@ -407,25 +407,25 @@ LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
  .debug_abbrev  0x0000005f       0xae pwm_pico.o
  .debug_abbrev  0x0000010d       0xdd timer_pico.o
 
-.debug_line     0x00000000      0x556
+.debug_line     0x00000000      0x631
  *(.debug_line)
- .debug_line    0x00000000       0xe3 picoBoard.o
- .debug_line    0x000000e3      0x307 pwm_pico.o
- .debug_line    0x000003ea      0x16c timer_pico.o
+ .debug_line    0x00000000      0x1be picoBoard.o
+ .debug_line    0x000001be      0x307 pwm_pico.o
+ .debug_line    0x000004c5      0x16c timer_pico.o
 
-.debug_frame    0x00000000      0x1a0
+.debug_frame    0x00000000      0x1d0
  *(.debug_frame)
- .debug_frame   0x00000000       0x40 picoBoard.o
- .debug_frame   0x00000040      0x100 pwm_pico.o
- .debug_frame   0x00000140       0x60 timer_pico.o
+ .debug_frame   0x00000000       0x70 picoBoard.o
+ .debug_frame   0x00000070      0x100 pwm_pico.o
+ .debug_frame   0x00000170       0x60 timer_pico.o
 
-.debug_str      0x00000000      0x297
+.debug_str      0x00000000      0x2be
  *(.debug_str)
- .debug_str     0x00000000       0xb3 picoBoard.o
-                                 0xec (size before relaxing)
- .debug_str     0x000000b3      0x14c pwm_pico.o
+ .debug_str     0x00000000       0xda picoBoard.o
+                                0x113 (size before relaxing)
+ .debug_str     0x000000da      0x14c pwm_pico.o
                                 0x20b (size before relaxing)
- .debug_str     0x000001ff       0x98 timer_pico.o
+ .debug_str     0x00000226       0x98 timer_pico.o
                                 0x157 (size before relaxing)
 
 .debug_loc      0x00000000       0xa0
