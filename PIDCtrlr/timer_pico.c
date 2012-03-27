@@ -1,8 +1,5 @@
 #include <timer_pico.h>
 
-volatile uint32_t timer0_ovrflow_cnt;
-volatile uint32_t timer1_ovrflow_cnt;
-
 void reset_timer0(void)
 {
     TCNT0 = timer0_ovrflow_cnt = 0;
@@ -23,6 +20,10 @@ void init_timer1(const u08 prescaler)
   TIMSK1 = _BV(TOIE1); // enable interrupts
   reset_timer1(); // reset counter
 }
+const uint32_t get_timer0_overflow(void)
+{
+    return timer0_ovrflow_cnt;
+}
 void delay_us(unsigned short time_us) 
 {
 	unsigned short delay_loops;
@@ -34,4 +35,9 @@ void delay_us(unsigned short time_us)
 	for (i=0; i < delay_loops; i++) {
 		asm("nop");
 	};
+}
+
+ISR(TIMER0_OVF_vect) 
+{
+  timer0_ovrflow_cnt++;
 }

@@ -13,10 +13,14 @@
 #define TIMER_CLK_T_FALL  0x06 ///< Timer clocked at T falling edge
 #define TIMER_CLK_T_RISE  0x07 ///< Timer clocked at T rising edge
 
+volatile uint32_t timer0_ovrflow_cnt;
+volatile uint32_t timer1_ovrflow_cnt;
+
 void reset_timer0(void);
 void reset_timer1(void);
 void init_timer0(const u08 prescaler);
 void init_timer1(const u08 prescaler);
+const uint32_t get_timer0_overflow(void);
 void delay_us(unsigned short time_us) ;
 
 #endif

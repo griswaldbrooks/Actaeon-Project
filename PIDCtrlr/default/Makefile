@@ -43,7 +43,7 @@ INCLUDES = -I"C:\Robot\Actaeon-Project\PIDCtrlr\."
 LIBS = -lc -lm 
 
 ## Objects that must be built in order to link
-OBJECTS = picoBoard.o pwm_pico.o timer_pico.o 
+OBJECTS = picoBoard.o pwm_pico.o timer_pico.o rprintf.o uart4.o buffer.o encoder_pico.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
@@ -57,6 +57,18 @@ pwm_pico.o: ../pwm_pico.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 timer_pico.o: ../timer_pico.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+rprintf.o: ../rprintf.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+uart4.o: ../uart4.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+buffer.o: ../buffer.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
+
+encoder_pico.o: ../encoder_pico.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 ##Link
