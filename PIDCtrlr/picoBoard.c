@@ -84,10 +84,28 @@ int main(void){
 	s32 l_count_previous = 0;
 	s32 r_count_current = 0;
 	s32 r_count_previous = 0;
+
+	u08 key;
+	u16 duty = 360;	//360
+	u08 counter = 1;
+
+	float rps_r = 0;
+	float rps_r_prev = 0;
+	float rps_rf = 0;
+	float rps_rf_prev = 0;
+	float Kr = 25;
+	float dt_r = 0;
+
+	float rps_l = 0;
+	float rps_l_prev = 0;
+	float rps_lf = 0;
+	float rps_lf_prev = 0;
+	float Kl = 10;
+	float dt_l = 0;
 	
 	setup_hardware();
-	PWM_timer1_Set_Pin9(500);
-	PWM_timer1_Set_Pin10(500);
+	PWM_timer1_Set_Pin9(0);
+	PWM_timer1_Set_Pin10(0);
 	
 /**/
 	while(1){
@@ -96,14 +114,22 @@ int main(void){
 		l_count_current = get_left_count();
 		r_count_current = get_right_count();
 		
-		
 		if(l_count_current != l_count_previous){
 			l_count_current = get_left_count();
-			ticks_per_sec_l = (l_count_current - l_count_previous)/(elapsed_time_l - elapsed_time_l_previous);
-			
+			dt_l = (elapsed_time_l - elapsed_time_l_previous);
+			ticks_per_sec_l = (l_count_current - l_count_previous)/dt_l;
+
+			rps_l = ticks_per_sec_l/(TICKS_PER_ROTATION);
+			rps_lf = ((Kl*dt_l)/(Kl*dt_l + 2))*(rps_l + rps_l_prev) - ((Kl*dt_l - 2)/(Kl*dt_l + 2))*rps_lf_prev;
+
+			rps_l_prev = rps_l;
+			rps_lf_prev = rps_lf;
+
 			//rprintf("Left: ");
-			//rprintfFloat(5,ticks_per_sec_l/(TICKS_PER_ROTATION));
-			//rprintfCRLF();
+			rprintfFloat(5,rps_lf);
+			rprintf("\t\t,");
+			rprintfFloat(5,elapsed_time_l);
+			rprintfCRLF();
 			
 			l_count_previous = l_count_current;
 			
@@ -112,17 +138,32 @@ int main(void){
 		
 		if(r_count_current != r_count_previous){
 			r_count_current = get_right_count();
-			ticks_per_sec_r = (r_count_current - r_count_previous)/(elapsed_time_r - elapsed_time_r_previous);
+			dt_r = (elapsed_time_r - elapsed_time_r_previous);
+			ticks_per_sec_r = (r_count_current - r_count_previous)/dt_r;
 			
+			rps_r = ticks_per_sec_r/(TICKS_PER_ROTATION);
+			rps_rf = ((Kr*dt_r)/(Kr*dt_r + 2))*(rps_r + rps_r_prev) - ((Kr*dt_r - 2)/(Kr*dt_r + 2))*rps_rf_prev;
+
+			rps_r_prev = rps_r;
+			rps_rf_prev = rps_rf;
+
 			//rprintf("\tRight: ");
-			rprintfFloat(5,ticks_per_sec_r/(TICKS_PER_ROTATION));
-			rprintfCRLF();
+			//rprintfFloat(5,rps_rf);
+			//rprintf("\t\t,");
+			//rprintfFloat(5,elapsed_time_r);
+			//rprintfCRLF();
+			
 			
 			r_count_previous = r_count_current;
 			
 			elapsed_time_r_previous = elapsed_time_r;
 		}
-
+		
+		
+		PWM_timer1_Set_Pin9(duty);
+		PWM_timer1_Set_Pin10(duty);
+		
+		
 	}
 
 	return 0;
