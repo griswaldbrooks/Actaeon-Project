@@ -113,8 +113,8 @@ void PWM_timer0_Set_Pin6(u16 duty){
 	OCR0A = duty;
 }
 void PWM_timer1_Set_Pin9(u16 duty){
-	OCR1B = duty;
+	OCR1A = duty;
 }
 void PWM_timer1_Set_Pin10(u16 duty){
-	OCR1A = duty;
+	OCR1B = duty;
 }

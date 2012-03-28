@@ -19,6 +19,10 @@
 #define PORT_OFF( port_letter, number )			port_letter &= ~(1<<number)
 
 #define TICKS_PER_ROTATION		128
+#define WHEEL_RADIUS			5		// cm
+#define RIGHT_WHEEL_TIMEOUT		0.15	// sec
+#define LEFT_WHEEL_TIMEOUT		0.15	// sec
+#define M_2PIR					31.4159	// Constant for convering from cycles per second to cm/sec
 
 void pwm_setup(void){
 
@@ -71,6 +75,27 @@ void setup_hardware(void){
 
 }
 
+void wheel_r(float cmd_vel_r){
+	u16 duty;
+	// Limit velocity commands, cm/sec
+	if(cmd_vel_r > 32)  cmd_vel_r =  32;
+	if(cmd_vel_r < -32) cmd_vel_r = -32;
+  
+	duty = 1.1127*cmd_vel_r + 374.2424;
+	
+	PWM_timer1_Set_Pin10(duty);
+}
+
+void wheel_l(float cmd_vel_l){
+	u16 duty;
+	// Limit velocity commands, cm/sec
+	if(cmd_vel_l > 32)  cmd_vel_l =  32;
+	if(cmd_vel_l < -32) cmd_vel_l = -32;
+  
+	duty = -0.9697*cmd_vel_l + 369.6449;
+	
+	PWM_timer1_Set_Pin9(duty);
+}
 
 
 int main(void){
@@ -86,7 +111,6 @@ int main(void){
 	s32 r_count_previous = 0;
 
 	u08 key;
-	u16 duty = 360;	//360
 	u08 counter = 1;
 
 	float rps_r = 0;
@@ -102,10 +126,16 @@ int main(void){
 	float rps_lf_prev = 0;
 	float Kl = 10;
 	float dt_l = 0;
+
+	float Kp_l = 1;
+	float error_l;
+
+	float v_l;
+	float v_r;
 	
 	setup_hardware();
-	PWM_timer1_Set_Pin9(0);
-	PWM_timer1_Set_Pin10(0);
+	//PWM_timer1_Set_Pin9(0);
+	//PWM_timer1_Set_Pin10(0);
 	
 /**/
 	while(1){
@@ -113,10 +143,13 @@ int main(void){
 		
 		l_count_current = get_left_count();
 		r_count_current = get_right_count();
+
 		
+		
+
 		if(l_count_current != l_count_previous){
 			l_count_current = get_left_count();
-			dt_l = (elapsed_time_l - elapsed_time_l_previous);
+			dt_l = (elapsed_time_l - elapsed_time_l_previous);		
 			ticks_per_sec_l = (l_count_current - l_count_previous)/dt_l;
 
 			rps_l = ticks_per_sec_l/(TICKS_PER_ROTATION);
@@ -126,14 +159,17 @@ int main(void){
 			rps_lf_prev = rps_lf;
 
 			//rprintf("Left: ");
-			rprintfFloat(5,rps_lf);
-			rprintf("\t\t,");
-			rprintfFloat(5,elapsed_time_l);
-			rprintfCRLF();
+			//rprintfFloat(5,rps_lf);
+			//rprintf("\t\t,");
+			//rprintfFloat(5,elapsed_time_l);
+			//rprintfCRLF();
 			
 			l_count_previous = l_count_current;
 			
 			elapsed_time_l_previous = elapsed_time_l;
+		}
+		else if((elapsed_time_l - elapsed_time_l_previous) > LEFT_WHEEL_TIMEOUT){
+			rps_lf = 0;
 		}
 		
 		if(r_count_current != r_count_previous){
@@ -158,10 +194,25 @@ int main(void){
 			
 			elapsed_time_r_previous = elapsed_time_r;
 		}
+		else if(((elapsed_time_r - elapsed_time_r_previous)) > RIGHT_WHEEL_TIMEOUT){
+			rps_rf = 0;
+		}
 		
-		
-		PWM_timer1_Set_Pin9(duty);
-		PWM_timer1_Set_Pin10(duty);
+		v_l = M_2PIR*rps_lf;		
+		v_r = M_2PIR*rps_rf;
+
+		wheel_l(12);
+
+		wheel_r(12);
+
+		//rprintf("Left: ");
+		rprintfFloat(5,v_l);
+		//rprintf("Right: ");
+		rprintf("\t,");
+		rprintfFloat(5,v_r);
+		rprintf("\t,");
+		rprintfFloat(5,elapsed_time_l);
+		rprintfCRLF();
 		
 		
 	}
