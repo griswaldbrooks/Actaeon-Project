@@ -116,8 +116,6 @@ int main(void){
 	s32 r_count_current = 0;
 	s32 r_count_previous = 0;
 
-	u08 key;
-	u08 counter = 1;
 	
 	// Filter values for velocity encoding
 	float rps_r = 0;
@@ -136,42 +134,72 @@ int main(void){
 	////////////////////////////////////////
 	
 	
-
+	// Wheel Linear Velcities	
 	float v_l;
 	float v_r;
-	float v_l_cmd = 18;
-	float v_r_cmd;
+	///////////////////////////////////////
+	
+	// Velocity Commands
+	float v_l_cmd = 0;
+	float v_r_cmd = 18;
+	////////////////////////////////////////
 
-	float v_l_out;
 	
 	// PID constants //////////////////////////////////////////////////////////////
 
 	float error_l_n1, error_l;							// Error, previous
+	float error_r_n1, error_r;							// Error, previous
+
 	float u_l, up_l, ui_l, ud_l;						// Output, PID
-	float ui_l_n1;										// Previous integral
+	float u_r, up_r, ui_r, ud_r;						// Output, PID
+
+	float ui_l_n1 = 0;									// Previous integral
+	float ui_r_n1 = 0;									// Previous integral
+
 	float ud_l_n1, udf_l, udf_l_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
+	float ud_r_n1, udf_r, udf_r_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
+	
 	float Kp_l, Ki_l, Kd_l, K_l, T_l, Ti_l, Td_l;		// PID Constants
+	float Kp_r, Ki_r, Kd_r, K_r, T_r, Ti_r, Td_r;		// PID Constants
+	
 	float lpf1_l, lpf2_l, lpf3_l;								// Low pass filter constants
+	float lpf1_r, lpf2_r, lpf3_r;								// Low pass filter constants
+
 	float wb = 1256.6;									// Break frequency in radians/sec
 	
 	// Initialize memory
 	error_l_n1 = error_l = u_l = 0;
+	error_r_n1 = error_r = u_r = 0;
+
 	ud_l_n1 = udf_l = udf_l_n1 = 0;
+	ud_r_n1 = udf_r = udf_r_n1 = 0;
 	
 	//Ku = 0.002
+	K_l = 0.0008;
 	//K_l = 0.0012;
-	K_l = 0.025;									// Tuned value
+	//K_l = 0.025;									// Tuned value;
+	//K_r = 0.3600;
+	K_r = 0.8;
+
 	Ti_l = 1.1945;
 	Td_l = 0.2986;
 	T_l = 2.3890;										// sec
+
+	Ti_r = 0.1100;
+	Td_r = 0.0275;
+	T_r = 0.2200;										// sec
 		
-	Kp_l = K_l;											// Proportional constant
-	Ki_l = (K_l*T_l)/(2*Ti_l);							// Integral constant
-	Kd_l = (2*K_l*Td_l)/T_l;							// Derivative constant
+	Kp_r = K_r;											// Proportional constant
+	Ki_r = (K_r*T_r)/(2*Ti_r);							// Integral constant
+	Kd_r = (2*K_r*Td_r)/T_r;							// Derivative constant
 	
 	lpf1_l = (wb*T_l)/(2 + wb*T_l);
 	lpf2_l = lpf1_l;
 	lpf3_l = (wb*T_l - 2)/(wb*T_l + 2);
+
+	lpf1_r = (wb*T_r)/(2 + wb*T_r);
+	lpf2_r = lpf1_r;
+	lpf3_r = (wb*T_r - 2)/(wb*T_r + 2);
 	///////////////////////////////////////////////////////////////////////////////////////
 	
 	
@@ -184,7 +212,7 @@ int main(void){
 	wheel_l(0);
 	wheel_r(0);
 	
-	for(u16 ndx = 0; ndx < 600; ndx++){
+	for(u16 ndx = 0; ndx < 10000; ndx++){
 		delay_us(200);
 	}
 
@@ -193,9 +221,6 @@ int main(void){
 		
 		l_count_current = get_left_count();
 		r_count_current = get_right_count();
-
-		
-		
 
 		if(l_count_current != l_count_previous){
 			l_count_current = get_left_count();
@@ -256,21 +281,27 @@ int main(void){
 		/////////////////////////////////////////////////////////////
 
 		error_l = v_l_cmd - v_l;									// Current Left Wheel error
+		error_r = v_r_cmd - v_r;									// Current Right Wheel error
 	
 		// Calculate the proportion
 		up_l = Kp_l*error_l;										// Left Wheel Proportion
+		up_r = Kp_r*error_r;										// Right Wheel Proportion
 		
 		// Calculate the integral
 		ui_l = Ki_l*(error_l + error_l_n1) + ui_l_n1;				// Update Left Wheel integral
+		ui_r = Ki_r*(error_r + error_r_n1) + ui_r_n1;				// Update Right Wheel integral
 
 		// Calculate the derivative		
 		ud_l = Kd_l*(error_l - error_l_n1) - ud_l_n1;				// Update Left Wheel derivative
+		ud_r = Kd_r*(error_r - error_r_n1) - ud_r_n1;				// Update Right Wheel derivative
 		
 		// Filter the derivative output
 		udf_l = lpf1_l*ud_l + lpf2_l*ud_l_n1 - lpf3_l*udf_l_n1;		// Update filtered Left Wheel derivative
+		udf_r = lpf1_r*ud_r + lpf2_r*ud_r_n1 - lpf3_r*udf_r_n1;		// Update filtered Right Wheel derivative
 		
 		u_l = up_l + ui_l + udf_l;									// u_l(t) to be output to the Left Wheel 
-		
+		u_r = up_r + ui_l + udf_r;									// u_r(t) to be output to the Right Wheel 
+
 		// Anti-windup
 		if(u_l > 30){
 			ui_l = ui_l_n1;
@@ -281,10 +312,24 @@ int main(void){
 			u_l = -30;
 		}
 
+		if(u_r > 30){
+			ui_r = ui_r_n1;
+			u_r = 30;	
+		}
+		else if(u_r < -30){
+			ui_r = ui_r_n1;
+			u_r = -30;
+		}
+
 		error_l_n1 = error_l;						// Update previous Left Wheel proportional error
 		ui_l_n1 = ui_l;								// Update previous Left Wheel integral
 		ud_l_n1 = ud_l;								// Update previous Left Wheel derivative
 		udf_l_n1 = udf_l;							// Update previous Left Wheel filtered derivative
+
+		error_r_n1 = error_r;						// Update previous Right Wheel proportional error
+		ui_r_n1 = ui_r;								// Update previous Right Wheel integral
+		ud_r_n1 = ud_r;								// Update previous Right Wheel derivative
+		udf_r_n1 = udf_r;							// Update previous Right Wheel filtered derivative
 
 		/////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////
@@ -292,20 +337,24 @@ int main(void){
 		
 		
 		wheel_l(u_l);
-		wheel_r(0);
+		wheel_r(u_r);
 
+		rprintfFloat(5,(elapsed_time_l - elapsed_time_l_previous));
+		rprintf("\t,");
 		//rprintf("Left: ");
-		rprintfFloat(5,v_l);
+		//rprintfFloat(5,v_l);
 		//rprintf("Right: ");
 		//rprintf("\t,");
-		//rprintfFloat(5,v_r);
+		rprintfFloat(5,u_r);
 		//rprintf("\t,");
-		//rprintfFloat(5,elapsed_time_l);
+		//rprintfFloat(5,(elapsed_time_l - elapsed_time_l_previous));
 		rprintfCRLF();
 		
 		
 	}
-
+	while(1){
+		rprintf("Dead.\n");
+	}
 	return 0;
 
 }
