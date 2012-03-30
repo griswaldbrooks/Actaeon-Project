@@ -28,8 +28,8 @@ picoBoard.o: ../picoBoard.c \
   C:\Robot\Actaeon-Project\PIDCtrlr\./uart4.h \
   C:\Robot\Actaeon-Project\PIDCtrlr\./global.h \
   C:\Robot\Actaeon-Project\PIDCtrlr\./buffer.h \
-  C:\Robot\Actaeon-Project\PIDCtrlr\./rprintf.h \
-  C:\Robot\Actaeon-Project\PIDCtrlr\./encoder_pico.h
+  C:\Robot\Actaeon-Project\PIDCtrlr\./encoder_pico.h \
+  C:\Robot\Actaeon-Project\PIDCtrlr\./rprintf.h
 
 c:/winavr-20081205/lib/gcc/../../avr/include/avr/io.h:
 
@@ -89,6 +89,6 @@ C:\Robot\Actaeon-Project\PIDCtrlr\./global.h:
 
 C:\Robot\Actaeon-Project\PIDCtrlr\./buffer.h:
 
-C:\Robot\Actaeon-Project\PIDCtrlr\./rprintf.h:
-
 C:\Robot\Actaeon-Project\PIDCtrlr\./encoder_pico.h:
+
+C:\Robot\Actaeon-Project\PIDCtrlr\./rprintf.h:

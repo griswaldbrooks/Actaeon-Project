@@ -53,13 +53,13 @@ void prvSetupHardware(){
 	
 
 	uartInit();  // initialize the UART (serial port)
-    uartSetBaudRate(0, 34800); // LB
+    uartSetBaudRate(0, 38400); // LB
     uartSetBaudRate(1, 115200); // USB
     uartSetBaudRate(2, 115200); // XBEE
     uartSetBaudRate(3, 115200); // LDS
 	//G=Ground, T=Tx (connect to external Rx), R=Rx (connect to external Tx)
 
-	rprintfInit(uart2SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
+	rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
 	//rprintfInit(uart1SendByte);// initialize rprintf system and configure uart1 (USB) for rprintf
 
 	configure_ports(); // configure which ports are analog, digital, etc.
@@ -217,12 +217,12 @@ void right_wall(uint16_t range[]){
 
 	ang_v = -0.3*(r_rng_avg-230)/sqrt(1 + square(r_rng_avg-230));
 
-	send_frame((float)lin_v,(float)ang_v);
+	send_frame(100*lin_v,100*ang_v);
 	rprintf("400, ");
-	rprintfFloat(5,ang_v);
+	rprintfFloat(5,100*ang_v);
 	rprintfCRLF();
 	rprintf("500, ");
-	rprintfFloat(5,lin_v);
+	rprintfFloat(5,100*lin_v);
 	rprintfCRLF();
 
 }
@@ -239,18 +239,24 @@ int main(void)
 	while(1){
 		// Print ranges
 		//rprintf("Scan start\n");
+/**/
 		get_range_scan(ranges);
-		/* Print ranges */
+		// Print ranges //
+		/*
 		for(uint16_t r_ndx = 0; r_ndx < 360; r_ndx++){
 			rprintf("%d,%d",r_ndx,ranges[r_ndx]);
 			//uart2SendByte(ranges[r_ndx]);
 			rprintfCRLF();
 			//uart2SendByte('\n');
 		}
+		*/
 		//rprintf("\nScan end\n\n");
 		
-		right_wall(ranges);
-		
+		//right_wall(ranges);
+		send_frame(30,0);
+		delay_ms(100);
+
+
 		//BRIAN==========================================================		
 		//. Uptake [distance, velocity][n = 1:360]
 		/*

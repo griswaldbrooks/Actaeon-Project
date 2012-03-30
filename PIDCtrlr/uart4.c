@@ -61,6 +61,7 @@ void uart0Init(void)
 	UartRxFunc[0] = 0;
 	// enable RxD/TxD and interrupts
 	outb(UCSR0B, BV(RXCIE)|BV(TXCIE)|BV(RXEN)|BV(TXEN));
+	//outb(UCSR0B, BV(RXEN)|BV(TXEN));
 	// set default baud rate
 	uartSetBaudRate(0, UART0_DEFAULT_BAUD_RATE); 
 	// initialize states
@@ -289,12 +290,14 @@ void uartReceiveService(u08 nUart)
 }
 
 	// service UART transmit interrupt
-UART_INTERRUPT_HANDLER(SIG_USART0_TRANS)      
+//UART_INTERRUPT_HANDLER(SIG_USART0_TRANS)      
+ISR(USART_TX_vect)  
 {
 	uartTransmitService(0);
 }
 	// service UART receive interrupt
-UART_INTERRUPT_HANDLER(SIG_USART0_RECV)      
+//UART_INTERRUPT_HANDLER(_VECTOR(25))      
+ISR(USART_RX_vect)      
 {
 	uartReceiveService(0);
 }
