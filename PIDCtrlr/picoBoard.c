@@ -17,15 +17,99 @@
 //define port functions; example: PORT_ON( PORTD, 6);
 #define PORT_ON( port_letter, number )			port_letter |= (1<<number)
 #define PORT_OFF( port_letter, number )			port_letter &= ~(1<<number)
+#define wheel_l_on()							PWM_timer1_On_Pin9();
+#define wheel_r_on()							PWM_timer1_On_Pin10();
 
+#define ROBOT_DIAMETER			16.8	// cm
+#define ROBOT_RADIUS			8.4		// cm
 #define TICKS_PER_ROTATION		128
 #define WHEEL_RADIUS			5		// cm
 #define RIGHT_WHEEL_TIMEOUT		0.15	// sec
 #define LEFT_WHEEL_TIMEOUT		0.15	// sec
 #define M_2PIR					31.4159	// Constant for convering from cycles per second to cm/sec
 
-#define wheel_l_on()	PWM_timer1_On_Pin9();
-#define wheel_r_on()	PWM_timer1_On_Pin10();
+// Global variables ///////////////////
+
+// Upper Brain Receive Uart ///////////
+#define UB_BUFFER_SIZE	512
+uint8_t ub_buffer[UB_BUFFER_SIZE];
+uint8_t *ub_buffer_write_ndx = NULL;
+uint8_t *ub_buffer_read_ndx = NULL;
+///////////////////////////////////////
+
+// Encoding variables /////////////////
+float elapsed_time_l = 0;
+float elapsed_time_r = 0;
+float elapsed_time_l_previous = 0;
+float elapsed_time_r_previous = 0;
+float elapsed_time;
+float ticks_per_sec_l = 0;
+float ticks_per_sec_r = 0;
+s32 l_count_current = 0;
+s32 l_count_previous = 0;
+s32 r_count_current = 0;
+s32 r_count_previous = 0;
+///////////////////////////////////////
+	
+// Filter values for velocity encoding
+float rps_r = 0;
+float rps_r_prev = 0;
+float rps_rf = 0;
+float rps_rf_prev = 0;
+float Kr = 25;
+float dt_r = 0;
+
+float rps_l = 0;
+float rps_l_prev = 0;
+float rps_lf = 0;
+float rps_lf_prev = 0;
+float Kl = 10;
+float dt_l = 0;
+////////////////////////////////////////
+
+// PID constants //////////////////////////////////////////////////////////////
+float error_l_n1, error_l;							// Error, previous
+float error_r_n1, error_r;							// Error, previous
+
+float u_l, up_l, ui_l, ud_l;						// Output, PID
+float u_r, up_r, ui_r, ud_r;						// Output, PID
+
+float ui_l_n1 = 0;									// Previous integral
+float ui_r_n1 = 0;									// Previous integral
+
+float ud_l_n1, udf_l, udf_l_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
+float ud_r_n1, udf_r, udf_r_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
+	
+float Kp_l, Ki_l, Kd_l, K_l, T_l, Ti_l, Td_l;		// PID Constants
+float Kp_r, Ki_r, Kd_r, K_r, T_r, Ti_r, Td_r;		// PID Constants
+	
+float lpf1_l, lpf2_l, lpf3_l;						// Low pass filter constants
+float lpf1_r, lpf2_r, lpf3_r;						// Low pass filter constants
+
+float wb = 1256.6;									// Break frequency in radians/sec
+////////////////////////////////////////
+		
+// Wheel Linear Velcities //////////////
+float v_l;
+float v_r;
+////////////////////////////////////////
+
+// Robot Velocities ////////////////////
+float ang_vel_robot;
+float lin_vel_robot;
+////////////////////////////////////////
+
+// Robot Heading ///////////////////////
+float heading_robot;
+////////////////////////////////////////
+
+// Robot Commands //////////////////////
+float v_l_cmd;
+float v_r_cmd;
+float cmd_lin_vel;
+float cmd_ang_vel;
+float cmd_heading = 0;
+////////////////////////////////////////
 
 void pwm_setup(void){
 
@@ -37,6 +121,30 @@ void pwm_setup(void){
 	sbi(DDRB,DDB2);		// Pin 10
 }
 
+void ubRcv(unsigned char c){
+	if(c != 0xff){
+		*ub_buffer_write_ndx = c;
+		ub_buffer_write_ndx++;		
+		if(ub_buffer_write_ndx >= (ub_buffer + UB_BUFFER_SIZE)){ 
+			ub_buffer_write_ndx = ub_buffer;
+		}
+	}	
+}
+
+uint8_t read_ub(){
+	while(ub_buffer_read_ndx == ub_buffer_write_ndx){ delay_us(10); };
+	uint8_t data = *ub_buffer_read_ndx;
+	ub_buffer_read_ndx++;
+	if(ub_buffer_read_ndx >= (ub_buffer + UB_BUFFER_SIZE)){ 
+		ub_buffer_read_ndx = ub_buffer;
+	}
+	return data;
+}
+
+void init_ub_buffer(){
+	ub_buffer_write_ndx = ub_buffer_read_ndx = ub_buffer;
+}
+
 void setup_hardware(void){
 	// Set pins PD0 and PD1 for UART RX and TX respectively
 	cbi(DDRD,DDD0);		// Pin 0 RX
@@ -44,6 +152,10 @@ void setup_hardware(void){
 	uartInit();
 	uartSetBaudRate(0,115200);
 	rprintfInit(uart0SendByte);
+	//UART ISR *** UART ISR ***
+	init_ub_buffer();
+	uartSetRxHandler(0, &ubRcv);
+	//UART ISR *** UART ISR ***
 
 	// Clear pins for encoders to input
 	cbi(DDRD,DDD7);		// Pin 7  Left  Quadrature Encoder
@@ -105,81 +217,16 @@ void wheel_l(float cmd_vel_l){
 
 
 int main(void){
-	float elapsed_time_l = 0;
-	float elapsed_time_r = 0;
-	float elapsed_time_l_previous = 0;
-	float elapsed_time_r_previous = 0;
-	float ticks_per_sec_l = 0;
-	float ticks_per_sec_r = 0;
-	s32 l_count_current = 0;
-	s32 l_count_previous = 0;
-	s32 r_count_current = 0;
-	s32 r_count_previous = 0;
-
 	
-	// Filter values for velocity encoding
-	float rps_r = 0;
-	float rps_r_prev = 0;
-	float rps_rf = 0;
-	float rps_rf_prev = 0;
-	float Kr = 25;
-	float dt_r = 0;
-
-	float rps_l = 0;
-	float rps_l_prev = 0;
-	float rps_lf = 0;
-	float rps_lf_prev = 0;
-	float Kl = 10;
-	float dt_l = 0;
-	////////////////////////////////////////
-	
-	
-	// Wheel Linear Velcities	
-	float v_l;
-	float v_r;
-	///////////////////////////////////////
-	
-	// Velocity Commands
-	float v_l_cmd = 0;
-	float v_r_cmd = 18;
-	////////////////////////////////////////
-
-	
-	// PID constants //////////////////////////////////////////////////////////////
-
-	float error_l_n1, error_l;							// Error, previous
-	float error_r_n1, error_r;							// Error, previous
-
-	float u_l, up_l, ui_l, ud_l;						// Output, PID
-	float u_r, up_r, ui_r, ud_r;						// Output, PID
-
-	float ui_l_n1 = 0;									// Previous integral
-	float ui_r_n1 = 0;									// Previous integral
-
-	float ud_l_n1, udf_l, udf_l_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
-	float ud_r_n1, udf_r, udf_r_n1;						// Previous derivative, filtered derivative value and previous filtered derivative value
-	
-	float Kp_l, Ki_l, Kd_l, K_l, T_l, Ti_l, Td_l;		// PID Constants
-	float Kp_r, Ki_r, Kd_r, K_r, T_r, Ti_r, Td_r;		// PID Constants
-	
-	float lpf1_l, lpf2_l, lpf3_l;								// Low pass filter constants
-	float lpf1_r, lpf2_r, lpf3_r;								// Low pass filter constants
-
-	float wb = 1256.6;									// Break frequency in radians/sec
-	
-	// Initialize memory
+	// Initialize variables ///////////////////////////////////////////////////////////
 	error_l_n1 = error_l = u_l = 0;
 	error_r_n1 = error_r = u_r = 0;
 
 	ud_l_n1 = udf_l = udf_l_n1 = 0;
 	ud_r_n1 = udf_r = udf_r_n1 = 0;
 	
-	//Ku = 0.002
-	K_l = 0.0008;
-	//K_l = 0.0012;
-	//K_l = 0.025;									// Tuned value;
-	//K_r = 0.3600;
-	K_r = 0.8;
+	K_l = 0.0008;;
+	K_r = 0.0006;
 
 	Ti_l = 1.1945;
 	Td_l = 0.2986;
@@ -189,7 +236,11 @@ int main(void){
 	Td_r = 0.0275;
 	T_r = 0.2200;										// sec
 		
-	Kp_r = K_r;											// Proportional constant
+	Kp_l = K_l;											// Proportional constant
+	Ki_l = (K_l*T_l)/(2*Ti_l);							// Integral constant
+	Kd_l = (2*K_l*Td_l)/T_l;							// Derivative constant
+
+	Kp_r = 0.6*K_r;										// Proportional constant
 	Ki_r = (K_r*T_r)/(2*Ti_r);							// Integral constant
 	Kd_r = (2*K_r*Td_r)/T_r;							// Derivative constant
 	
@@ -207,16 +258,19 @@ int main(void){
 	
 	
 /**/
-	wheel_l_on();
-	wheel_r_on();
 	wheel_l(0);
 	wheel_r(0);
+	wheel_l_on();
+	wheel_r_on();
 	
+	// Wait two seconds
 	for(u16 ndx = 0; ndx < 10000; ndx++){
 		delay_us(200);
 	}
 
 	while(1){
+		
+	// Velocity Encoding //////////////////////////////////////////////////////////////////////
 		elapsed_time_l = elapsed_time_r = ((get_timer0_overflow()*255 + TCNT0) * 0.0435) / 10000;
 		
 		l_count_current = get_left_count();
@@ -273,13 +327,41 @@ int main(void){
 			rps_rf = 0;
 		}
 		
+		// Convert from revolutions per second to cm/sec
 		v_l = M_2PIR*rps_lf;		
 		v_r = M_2PIR*rps_rf;
+		///////////////////////////////////////////////
+
+		/*
+		// Calculate correction angle //////////////////////////////
+		// The below code should not be in the final code and the commands
+		// from the Upper Brain will be in the form and linear and angular 
+		// velocity only
+
+		cmd_lin_vel = 20;				
+
+		elapsed_time = fmin(elapsed_time_r - elapsed_time_r_previous, elapsed_time_l - elapsed_time_l_previous);
+
+		// Calculate robot angular velocity
+		ang_vel_robot = (v_r - v_l) / ROBOT_DIAMETER;
+
+		// Calculate robot heading
+		heading_robot += ang_vel_robot * elapsed_time;
+
+		// Limit the heading to 2pi
+		heading_robot -= 2*M_PI*(1 + floor((heading_robot-M_PI)/(2*M_PI)));
+
+		// Calculate angular velocity correction 
+		cmd_ang_vel = -0.5*atan2(1*(heading_robot - cmd_heading) +0,1);
+		////////////////////////////////////////////////////////////
+		*/
+
+		// Velocity Commands
+		v_l_cmd = (cmd_lin_vel - cmd_ang_vel*ROBOT_RADIUS);
+		v_r_cmd = (cmd_lin_vel + cmd_ang_vel*ROBOT_RADIUS);
+		////////////////////////////////////////
 		
 		// PID calculation	/////////////////////////////////////////
-		/////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////
-
 		error_l = v_l_cmd - v_l;									// Current Left Wheel error
 		error_r = v_r_cmd - v_r;									// Current Right Wheel error
 	
@@ -300,7 +382,7 @@ int main(void){
 		udf_r = lpf1_r*ud_r + lpf2_r*ud_r_n1 - lpf3_r*udf_r_n1;		// Update filtered Right Wheel derivative
 		
 		u_l = up_l + ui_l + udf_l;									// u_l(t) to be output to the Left Wheel 
-		u_r = up_r + ui_l + udf_r;									// u_r(t) to be output to the Right Wheel 
+		u_r = up_r + ui_r + udf_r;									// u_r(t) to be output to the Right Wheel 
 
 		// Anti-windup
 		if(u_l > 30){
@@ -339,17 +421,20 @@ int main(void){
 		wheel_l(u_l);
 		wheel_r(u_r);
 
-		rprintfFloat(5,(elapsed_time_l - elapsed_time_l_previous));
-		rprintf("\t,");
+		//rprintfFloat(5,(elapsed_time_l - elapsed_time_l_previous));
+		//rprintf("\t,");
 		//rprintf("Left: ");
 		//rprintfFloat(5,v_l);
 		//rprintf("Right: ");
 		//rprintf("\t,");
-		rprintfFloat(5,u_r);
+		//rprintfFloat(5,v_r);
+		//rprintfFloat(5,cmd_ang_vel);
 		//rprintf("\t,");
 		//rprintfFloat(5,(elapsed_time_l - elapsed_time_l_previous));
-		rprintfCRLF();
-		
+		//rprintfCRLF();
+		u08 rxData;
+		rxData = read_ub();
+		rprintf("%c\n",rxData);
 		
 	}
 	while(1){
