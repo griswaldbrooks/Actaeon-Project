@@ -7,9 +7,9 @@
 #define SET				0x01
 #define UNSET			0x00
 #define AUDIO_PIN		10
-#define AUDIO_THRESH	613
-#define PEAKS_IN_10ms	30
-// There should be 38 peaks in 10 ms
+#define AUDIO_THRESH	600
+#define PEAKS_IN_SAMPLE	800
+
 
 union u_vel{
 	float f_vel;
@@ -233,8 +233,11 @@ void right_wall(uint16_t range[]){
 int main(void)
 {
 	uint8_t audio_start = UNSET;
-	unsigned short audio_value[1000];
-	uint8_t audio_count = 0;
+	//unsigned short audio_value1[1000];
+	//unsigned short audio_value2[1000];
+	//unsigned short audio_value3[1000];
+	
+	uint16_t audio_count = 0;
 
 	uint16_t ranges[360];
 	double ang_vel = 0;
@@ -246,17 +249,42 @@ int main(void)
 	while(!audio_start){
 		if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
 			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
-				audio_value[s_ndx] = a2dConvert10bit(AUDIO_PIN);
-				//if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
+				//audio_value1[s_ndx] = a2dConvert10bit(AUDIO_PIN);
+				if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
 					audio_count++;
-				//}
+				}
 				//rprintf("%d\n",a2dConvert10bit(AUDIO_PIN));
 				delay_us(10);	// Sample every 10 us
 			}
 			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
-				rprintf("%d\n",audio_value[s_ndx]);
+				//audio_value2[s_ndx] = a2dConvert10bit(AUDIO_PIN);
+				if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
+					audio_count++;
+				}
+				//rprintf("%d\n",a2dConvert10bit(AUDIO_PIN));
+				delay_us(10);	// Sample every 10 us
 			}
-			if(audio_count > PEAKS_IN_10ms){
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				//audio_value3[s_ndx] = a2dConvert10bit(AUDIO_PIN);
+				if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
+					audio_count++;
+				}
+				//rprintf("%d\n",a2dConvert10bit(AUDIO_PIN));
+				delay_us(10);	// Sample every 10 us
+			}
+			
+			/*
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				rprintf("%d\n",audio_value1[s_ndx]);
+			}
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				rprintf("%d\n",audio_value2[s_ndx]);
+			}
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				rprintf("%d\n",audio_value3[s_ndx]);
+			}
+			*/
+			if(audio_count > PEAKS_IN_SAMPLE){
 				audio_start = SET;
 			}
 			else{
