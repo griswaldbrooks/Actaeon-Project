@@ -36,8 +36,7 @@ lbRTOS.o: ../lbRTOS.c C:\Robot\Actaeon-Project\ub\SoR/SoR_Utils.h \
   C:\Robot\Actaeon-Project\ub\./lds.h \
   C:\Robot\Actaeon-Project\ub\SoR/timer640.h \
   C:\Robot\Actaeon-Project\ub\SoR/rprintf.h \
-  C:\Robot\Actaeon-Project\ub\./obstacle_avoidance.h \
-  C:\Robot\Actaeon-Project\ub\./obstacle_avoidance_defines.h
+  C:\Robot\Actaeon-Project\ub\obstacle_avoidance\_main_/wall_follow.h
 
 C:\Robot\Actaeon-Project\ub\SoR/SoR_Utils.h:
 
@@ -115,6 +114,4 @@ C:\Robot\Actaeon-Project\ub\SoR/timer640.h:
 
 C:\Robot\Actaeon-Project\ub\SoR/rprintf.h:
 
-C:\Robot\Actaeon-Project\ub\./obstacle_avoidance.h:
-
-C:\Robot\Actaeon-Project\ub\./obstacle_avoidance_defines.h:
+C:\Robot\Actaeon-Project\ub\obstacle_avoidance\_main_/wall_follow.h:

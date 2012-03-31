@@ -299,8 +299,8 @@ int main(void){
 	ud_r_n1 = udf_r = udf_r_n1 = 0;
 	
 	//K_l = 0.0008;
-	K_l = 2;
-	K_r = 0;
+	K_l = 0.6;
+	K_r = 0.6;
 	//K_r = 0.0006;
 
 	Ti_l = 1.1945;
@@ -311,7 +311,7 @@ int main(void){
 	Td_r = 0.0275;
 	T_r = 0.2200;										// sec
 		
-	Kp_l = 0.6*K_l;											// Proportional constant
+	Kp_l = K_l;											// Proportional constant
 	Ki_l = (K_l*T_l)/(2*Ti_l);							// Integral constant
 	Kd_l = (2*K_l*Td_l)/T_l;							// Derivative constant
 
@@ -477,10 +477,10 @@ int main(void){
 		udf_l = lpf1_l*ud_l + lpf2_l*ud_l_n1 - lpf3_l*udf_l_n1;		// Update filtered Left Wheel derivative
 		udf_r = lpf1_r*ud_r + lpf2_r*ud_r_n1 - lpf3_r*udf_r_n1;		// Update filtered Right Wheel derivative
 		
-		u_l = up_l;									// u_l(t) to be output to the Left Wheel 
-		u_r = up_r;									// u_r(t) to be output to the Right Wheel 
-		//u_l = up_l + ui_l + udf_l;									// u_l(t) to be output to the Left Wheel 
-		//u_r = up_r + ui_r + udf_r;									// u_r(t) to be output to the Right Wheel 
+		u_l += up_l;									// u_l(t) to be output to the Left Wheel 
+		u_r += up_r;									// u_r(t) to be output to the Right Wheel 
+		//u_l += up_l + ui_l + udf_l;									// u_l(t) to be output to the Left Wheel 
+		//u_r += up_r + ui_r + udf_r;									// u_r(t) to be output to the Right Wheel 
 
 		// Anti-windup
 		if(u_l > 30){

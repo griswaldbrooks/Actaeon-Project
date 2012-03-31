@@ -1,12 +1,15 @@
 
 #include <SoR_Utils.h>
 #include <lds.h>
-#include <obstacle_avoidance.h>
+#include <wall_follow.h>
 
 
-
-#define SET		0x01;
-#define UNSET	0x00;
+#define SET				0x01
+#define UNSET			0x00
+#define AUDIO_PIN		10
+#define AUDIO_THRESH	613
+#define PEAKS_IN_10ms	30
+// There should be 38 peaks in 10 ms
 
 union u_vel{
 	float f_vel;
@@ -178,7 +181,7 @@ void right_wall(uint16_t range[]){
 	uint8_t r_cntr = 0;
 	float f_rng_avg = 0;
 	float r_rng_avg = 0;
-	const MIN_RANGE = 150; // mm
+	const uint8_t MIN_RANGE = 150; // mm
 	// Calculate the average of the front 5 valid beams
 	for(uint8_t r_ndx = 0; r_ndx < 5; r_ndx++){
 		uint8_t f_ndx = 358 + r_ndx;
@@ -217,25 +220,54 @@ void right_wall(uint16_t range[]){
 
 	ang_v = -0.3*(r_rng_avg-230)/sqrt(1 + square(r_rng_avg-230));
 
-	send_frame(100*lin_v,100*ang_v);
+	send_frame(lin_v,ang_v);
 	rprintf("400, ");
-	rprintfFloat(5,100*ang_v);
+	rprintfFloat(5,ang_v);
 	rprintfCRLF();
 	rprintf("500, ");
-	rprintfFloat(5,100*lin_v);
+	rprintfFloat(5,lin_v);
 	rprintfCRLF();
 
 }
 
 int main(void)
 {
-	
+	uint8_t audio_start = UNSET;
+	unsigned short audio_value[1000];
+	uint8_t audio_count = 0;
+
 	uint16_t ranges[360];
+	double ang_vel = 0;
+	double lin_vel = 0;
 	init_LDS_buffer();
 	prvSetupHardware();
 	rprintf("Starting program.\n");
 	
-	double fow, right;
+	while(!audio_start){
+		if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				audio_value[s_ndx] = a2dConvert10bit(AUDIO_PIN);
+				//if(a2dConvert10bit(AUDIO_PIN) > AUDIO_THRESH){
+					audio_count++;
+				//}
+				//rprintf("%d\n",a2dConvert10bit(AUDIO_PIN));
+				delay_us(10);	// Sample every 10 us
+			}
+			for(uint16_t s_ndx = 0; s_ndx < 1000; s_ndx++){
+				rprintf("%d\n",audio_value[s_ndx]);
+			}
+			if(audio_count > PEAKS_IN_10ms){
+				audio_start = SET;
+			}
+			else{
+				audio_count = 0;
+			}
+			
+		}
+		delay_us(10);	// Sample every 10 us
+	}
+	
+	rprintf("START!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	while(1){
 		// Print ranges
 		//rprintf("Scan start\n");
@@ -253,9 +285,30 @@ int main(void)
 		//rprintf("\nScan end\n\n");
 		
 		//right_wall(ranges);
+		/*
+		send_frame(18,0);
+		delay_ms(1000);
+		delay_ms(1000);
+		delay_ms(1000);
+		send_frame(0,0.25);
+		delay_ms(500);
+		send_frame(18,0);
+		delay_ms(1000);
+		send_frame(0,0.5);
+		delay_ms(1000);
 		send_frame(30,0);
-		delay_ms(100);
-
+		delay_ms(1000);
+		send_frame(12,0.125);
+		delay_ms(1000);
+		delay_ms(1000);
+		delay_ms(1000);
+		delay_ms(1000);
+		delay_ms(1000);
+		delay_ms(1000);
+		*/
+		navupdate(ranges, &lin_vel, &ang_vel);
+		send_frame(lin_vel,ang_vel);
+		delay_ms(10);
 
 		//BRIAN==========================================================		
 		//. Uptake [distance, velocity][n = 1:360]

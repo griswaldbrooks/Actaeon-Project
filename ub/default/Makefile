@@ -37,7 +37,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
 ## Include Directories
-INCLUDES = -I"C:\Robot\Actaeon-Project\ub\." -I"C:\Robot\Actaeon-Project\ub\SoR" 
+INCLUDES = -I"C:\Robot\Actaeon-Project\ub\." -I"C:\Robot\Actaeon-Project\ub\SoR" -I"C:\Robot\Actaeon-Project\ub\obstacle_avoidance\_main_" 
 
 ## Libraries
 LIBS = -lm -lc 
